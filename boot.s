@@ -45,36 +45,29 @@ doesn't make sense to return from this function as the bootloader is gone.
 .global _start
 .type _start, @function
 _start:
-	/*
-	The bootloader has loaded us into 32-bit protected mode on a x86
-	machine. Interrupts are disabled. Paging is disabled. The processor
-	state is as defined in the multiboot standard. The kernel has full
-	control of the CPU. The kernel can only make use of hardware features
-	and any code it provides as part of itself. There's no printf
-	function, unless the kernel provides its own <stdio.h> header and a
-	printf implementation. There are no security restrictions, no
-	safeguards, no debugging mechanisms, only what the kernel provides
-	itself. It has absolute and complete power over the
-	machine.
-	*/
+
+	mov $stack_top, %esp		# Setup stack so that we can call C functions from now on
  
-	/*
-	To set up a stack, we set the esp register to point to the top of the
-	stack (as it grows downwards on x86 systems). This is necessarily done
-	in assembly as languages such as C cannot function without a stack.
-	*/
-	mov $stack_top, %esp
- 
-	/*
-	This is a good place to initialize crucial processor state before the
-	high-level kernel is entered. It's best to minimize the early
-	environment where crucial features are offline. Note that the
-	processor is not fully initialized yet: Features such as floating
-	point instructions and instruction set extensions are not initialized
-	yet. The GDT should be loaded here. Paging should be enabled here.
-	C++ features such as global constructors and exceptions will require
-	runtime support to work as well.
-	*/
+	cli							# Disable interrupts
+	call setup_gdt				# Call a C function that setups the GDT. The GDT is a space defined below
+	jmp gdt_setup_ok			# Jump past the 'reload_gdt' function declaration below
+
+	.global reload_gdt
+	reload_gdt:
+    	lgdt gdtdesc
+    	jmp $0x08, $complete_flush
+
+		complete_flush:
+    		mov %ax, 0x10
+			mov %ds, %ax
+			mov %es, %ax
+			mov %fs, %ax
+			mov %gs, %ax
+			mov %ss, %ax
+		ret
+	
+	gdt_setup_ok:
+	sti							# Re-enable interrupts, not that we can handle them
  
 	/*
 	Enter the high-level kernel. The ABI requires the stack is 16-byte
@@ -102,6 +95,22 @@ _start:
 1:	hlt
 	jmp 1b
  
+
+.p2align 2
+/**
+	The GDT is set in setup_gdt in kernel.c
+	Here we reserve the space and make it visible outside this file.
+	It will have 3 segments: NULL, Code and Data
+**/
+.global gdt
+gdt:
+	.skip 24			# 8 byte per segment * 3
+						# one day we will need an extra segment for the TSS to support interrupts
+gdtdesc:
+	.word 0x17			# sizeof(gdt) - 1 (23)
+	.long gdt			# address of gdt
+
+
 /*
 Set the size of the _start symbol to the current location '.' minus its start.
 This is useful when debugging or when you implement call tracing.
