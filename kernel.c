@@ -1,6 +1,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+
  
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -140,8 +141,14 @@ void set_gdt_entry (
 
 void setup_gdt(void)
 {
+	#define TSS_SIZE 1024
+	// Note: The size of the TSS is also defined in boot.s
+	// If you need to change it don't forget to also change it in boot.s
     extern char *gdt;
-    set_gdt_entry(gdt, 0, 0, 0, 0);                 // SEG_NULL
-	set_gdt_entry(gdt, 1, 0x0, 0xffffffff, 0x9a);   // SEG_CODE    
-	set_gdt_entry(gdt, 2, 0x0, 0xffffffff, 0x89);   // SEG_DATA
+	extern char *tss;
+
+    set_gdt_entry(gdt, 0, 0, 0, 0);                 		// SEG_NULL
+	set_gdt_entry(gdt, 1, 0x0, 0xffffffff, 0x9a);   		// SEG_CODE    
+	set_gdt_entry(gdt, 2, 0x0, 0xffffffff, 0x89);   		// SEG_DATA
+	set_gdt_entry(gdt, 3, (uint32_t) tss, TSS_SIZE, 0x89); 	// SEG_TSS0
 }

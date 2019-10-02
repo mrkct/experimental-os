@@ -4,7 +4,11 @@
 .set FLAGS,    ALIGN | MEMINFO  /* this is the Multiboot 'flag' field */
 .set MAGIC,    0x1BADB002       /* 'magic number' lets bootloader find the header */
 .set CHECKSUM, -(MAGIC + FLAGS) /* checksum of above, to prove we are multiboot */
- 
+
+/* Declare constants for memory spaces */
+.set STACK_SIZE,	16384		# 16KB
+.set TSS_SIZE,		1024		#  1KB
+
 /* 
 Declare a multiboot header that marks the program as a kernel. These are magic
 values that are documented in the multiboot standard. The bootloader will
@@ -33,7 +37,7 @@ undefined behavior.
 .section .bss
 .align 16
 stack_bottom:
-.skip 16384 # 16 KiB
+.skip STACK_SIZE
 stack_top:
  
 /*
@@ -69,28 +73,12 @@ _start:
 	gdt_setup_ok:
 	sti							# Re-enable interrupts, not that we can handle them
  
-	/*
-	Enter the high-level kernel. The ABI requires the stack is 16-byte
-	aligned at the time of the call instruction (which afterwards pushes
-	the return pointer of size 4 bytes). The stack was originally 16-byte
-	aligned above and we've pushed a multiple of 16 bytes to the
-	stack since (pushed 0 bytes so far), so the alignment has thus been
-	preserved and the call is well defined.
-	*/
 	call kernel_main
  
 	/*
-	If the system has nothing more to do, put the computer into an
-	infinite loop. To do that:
-	1) Disable interrupts with cli (clear interrupt enable in eflags).
-	   They are already disabled by the bootloader, so this is not needed.
-	   Mind that you might later enable interrupts and return from
-	   kernel_main (which is sort of nonsensical to do).
-	2) Wait for the next interrupt to arrive with hlt (halt instruction).
-	   Since they are disabled, this will lock up the computer.
-	3) Jump to the hlt instruction if it ever wakes up due to a
-	   non-maskable interrupt occurring or due to system management mode.
+		If the kernel returns (and it shouldn't) we halt the processor.
 	*/
+
 	cli
 1:	hlt
 	jmp 1b
@@ -100,16 +88,18 @@ _start:
 /**
 	The GDT is set in setup_gdt in kernel.c
 	Here we reserve the space and make it visible outside this file.
-	It will have 3 segments: NULL, Code and Data
+	It will have 3 segments: NULL, Code, Data and a TSS
 **/
+
 .global gdt
 gdt:
-	.skip 24			# 8 byte per segment * 3
-						# one day we will need an extra segment for the TSS to support interrupts
+	.skip 32			# 8 byte per segment * 4
 gdtdesc:
-	.word 0x17			# sizeof(gdt) - 1 (23)
+	.word 0x1f			# sizeof(gdt) - 1 (31)
 	.long gdt			# address of gdt
 
+.global tss
+tss: .skip TSS_SIZE		# sizeof(tss) = 1KB
 
 /*
 Set the size of the _start symbol to the current location '.' minus its start.
