@@ -51,13 +51,14 @@ doesn't make sense to return from this function as the bootloader is gone.
 _start:
 
 	mov $stack_top, %esp		# Setup stack so that we can call C functions from now on
- 
-	cli							# Disable interrupts
+
+	cli							# Disable interrupts, these need to be disabled until we setup the IDT
 	call setup_gdt				# Call a C function that setups the GDT. The GDT is a space defined below
 	jmp gdt_setup_ok			# Jump past the 'reload_gdt' function declaration below
 
 	.global reload_gdt
 	reload_gdt:
+		
     	lgdt gdtdesc
     	jmp $0x08, $complete_flush
 
@@ -71,8 +72,7 @@ _start:
 		ret
 	
 	gdt_setup_ok:
-	sti							# Re-enable interrupts, not that we can handle them
- 
+	
 	call kernel_main
  
 	/*
