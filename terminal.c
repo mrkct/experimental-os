@@ -123,3 +123,12 @@ void terminal_writeint(int data, const int base)
 			terminal_putchar('a' + (digits[i] - 10));
 	}
 }
+
+void terminal_clear(void)
+{
+	terminal_row = 0;
+	terminal_column = 0;
+	for (size_t i = 0; i < VGA_WIDTH; i++)
+		for (size_t j = 0; j < VGA_HEIGHT; j++)
+			terminal_putentryat(' ', terminal_color, i, j);
+}
