@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include "terminal.h"
 
+#define TAB_SIZE 4
  
 size_t strlen(const char* str) 
 {
@@ -45,13 +46,40 @@ void terminal_putentryat(char c, uint8_t color, size_t x, size_t y)
 	terminal_buffer[index] = vga_entry(c, color);
 }
  
+/**
+ * Moves the terminal cursor to the next line. If there are no more
+ * rows availabled it moves all the content before up one row to make space
+**/
+void terminal_nextline(void)
+{
+    terminal_column = 0;
+    if (++terminal_row == VGA_HEIGHT) {
+        terminal_row = VGA_HEIGHT - 1;
+        for (size_t row = 1; row < VGA_HEIGHT; row++) {
+            for (size_t col = 0; col < VGA_WIDTH; col++) {
+                terminal_buffer[VGA_WIDTH * (row-1) + col] = terminal_buffer[VGA_WIDTH * row + col];
+            }
+        }
+    }
+}
+
 void terminal_putchar(char c) 
 {
+    if (c == '\n') {
+        terminal_nextline();
+        return;
+    } else if (c == '\t') {
+        int spaces = VGA_WIDTH - terminal_column;
+        if (spaces > TAB_SIZE)
+            spaces = TAB_SIZE;
+        for (int i = 0; i < TAB_SIZE; i++)
+            terminal_putchar(' ');
+        return;
+    }
+    
 	terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
 	if (++terminal_column == VGA_WIDTH) {
-		terminal_column = 0;
-		if (++terminal_row == VGA_HEIGHT)
-			terminal_row = 0;
+		terminal_nextline();
 	}
 }
  
@@ -64,4 +92,34 @@ void terminal_write(const char* data, size_t size)
 void terminal_writestring(const char* data) 
 {
 	terminal_write(data, strlen(data));
+}
+
+/**
+ * Prints an integer, note that this only supports integers
+ * up to 4 bytes. This is only guaranteed to support up-to base 16
+ */
+void terminal_writeint(int data, const int base)
+{
+	bool is_negative = false;
+	if (data < 0) {
+		is_negative = true;
+		data *= -1;
+	}
+	
+	uint8_t digits[10] = {0};
+	int i = 9;
+	do {
+		digits[i--] = data % base;
+		data /= base;
+	} while (data != 0); 
+	
+	if (is_negative)
+		terminal_putchar('-');
+	
+	for (i = i+1; i < 10; i++) {
+		if (digits[i] < 10)
+			terminal_putchar('0' + digits[i]);
+		else
+			terminal_putchar('a' + (digits[i] - 10));
+	}
 }
