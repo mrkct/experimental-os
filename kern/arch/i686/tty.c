@@ -1,7 +1,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "terminal.h"
+#include <kernel/tty.h>
 
 #define TAB_SIZE 4
  
