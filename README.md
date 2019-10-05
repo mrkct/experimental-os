@@ -10,6 +10,8 @@ Add to your variables
     export PATH="$PREFIX/bin:$PATH"
 
 Change the variables to point to where your cross-compiler is.  
+Before all run `source config.sh`, this is necessary or building will fail. 
+You need to run this every time you open a new terminal. 
 Run `make build` to create a .bin you can run with qemu.  
 Run `make run` to build and run qemu with that bin.  
 Run `make build-iso` to create a .iso image. Requires having xorriso installed though.  
