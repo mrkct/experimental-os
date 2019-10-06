@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <kernel/tty.h>
+#include <kernel/i386/descriptor_tables.h>
 
  
 /* Check if the compiler thinks you are targeting the wrong operating system. */
@@ -14,46 +15,57 @@
 #error "This tutorial needs to be compiled with a ix86-elf compiler"
 #endif
 
+
+void terminal_setup(void)
+{
+    terminal_initialize();
+}
+
 void kernel_main(void) 
 {
-	terminal_initialize();
 	terminal_writestring("Hello, kernel World!\n");
 }
 
-void set_gdt_entry (
-    char *gdt, 
-    const int index, 
-    const uint32_t base, 
-    const uint32_t limit, 
-    const uint8_t type
-) 
+// Lets us access our ASM functions from our C code.
+extern void gdt_flush(uint32_t);
+
+// Internal function prototypes.
+static void init_gdt();
+static void gdt_set_gate(int32_t, uint32_t, uint32_t, uint8_t, uint8_t);
+
+gdt_entry_t gdt_entries[5];
+gdt_ptr_t   gdt_ptr;
+
+void init_descriptor_tables()
 {
-    const int offset = 8 * index;
-    // Encoding the limit
-    gdt[offset]     = limit & 0xff;
-    gdt[offset + 1] = (limit >> 8) & 0xff;
-    gdt[offset + 6] = 0xc0 | ((limit >> 16 ) & 0xf);
+    init_gdt();
+	terminal_writestring("Works\n");
+}
+
+static void init_gdt()
+{
+    gdt_ptr.limit = (sizeof(gdt_entry_t) * 5) - 1;
+    gdt_ptr.base  = (uint32_t)&gdt_entries;
+
+    gdt_set_gate(0, 0, 0, 0, 0);                // Null segment
+    gdt_set_gate(1, 0, 0xFFFFFFFF, 0x9A, 0xCF); // Code segment
+    gdt_set_gate(2, 0, 0xFFFFFFFF, 0x92, 0xCF); // Data segment
+    gdt_set_gate(3, 0, 0xFFFFFFFF, 0xFA, 0xCF); // User mode code segment
+    gdt_set_gate(4, 0, 0xFFFFFFFF, 0xF2, 0xCF); // User mode data segment
+
+    gdt_flush((uint32_t)&gdt_ptr);
+}
+
+// Set the value of one GDT entry.
+static void gdt_set_gate(int32_t num, uint32_t base, uint32_t limit, uint8_t access, uint8_t gran)
+{
+    gdt_entries[num].base_low    = (base & 0xFFFF);
+    gdt_entries[num].base_middle = (base >> 16) & 0xFF;
+    gdt_entries[num].base_high   = (base >> 24) & 0xFF; 
     
-    // Encoding the base
-    gdt[offset + 2] = base & 0xff;
-    gdt[offset + 3] = (base >> 8) & 0xff;
-    gdt[offset + 4] = (base >> 16) & 0xff;
-    gdt[offset + 7] = (base >> 24) & 0xff;
-
-    // Type byte
-    gdt[offset + 5] = type;
-}
-
-void setup_gdt(void)
-{
-	#define TSS_SIZE 1024
-	// Note: The size of the TSS is also defined in boot.s
-	// If you need to change it don't forget to also change it in boot.s
-    extern char *gdt;
-	extern char *tss;
-
-    set_gdt_entry(gdt, 0, 0, 0, 0);                 		// SEG_NULL
-	set_gdt_entry(gdt, 1, 0x0, 0xffffffff, 0x9a);   		// SEG_CODE    
-	set_gdt_entry(gdt, 2, 0x0, 0xffffffff, 0x89);   		// SEG_DATA
-	set_gdt_entry(gdt, 3, (uint32_t) tss, TSS_SIZE, 0x89); 	// SEG_TSS0
-}
+    gdt_entries[num].limit_low   = (limit & 0xFFFF);
+    gdt_entries[num].granularity = (limit >> 16) & 0x0F;    
+    
+    gdt_entries[num].granularity |= gran & 0xF0;
+    gdt_entries[num].access      = access;
+} 
