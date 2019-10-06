@@ -27,10 +27,7 @@ _start:
 	movl $stack_top, %esp
 
 	# Prepare the terminal, so that we can write to debug easier
-	call terminal_setup
-
-	# Call the GDT & IDT Setup
-	call init_descriptor_tables
+	call kernel_setup
 
 	# Transfer control to the main kernel.
 	call kernel_main

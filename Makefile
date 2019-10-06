@@ -9,7 +9,8 @@ OBJF = out
 OBJECT_FILES = \
 $(OBJF)/boot.o \
 $(OBJF)/kernel.o \
-$(OBJF)/tty.o
+$(OBJF)/tty.o \
+$(OBJF)/descriptor_tables.o \
 
 .PHONY: build release run clean config create-sysroot
 
@@ -21,7 +22,7 @@ create-sysroot: config
 
 build: myos.bin
 
-myos.bin: create-sysroot boot.o kernel.o tty.o
+myos.bin: create-sysroot boot.o kernel.o tty.o descriptor_tables.o
 	$(CC) -T linker.ld -o myos.bin $(OBJECT_FILES) $(LD_FLAGS)
 
 build-iso: myos.bin
@@ -45,3 +46,6 @@ kernel.o: config
 
 tty.o: config
 	$(CC) -c kern/arch/i686/tty.c -o $(OBJF)/tty.o $(CC_FLAGS)
+
+descriptor_tables.o: config
+	$(CC) -c kern/arch/i686/boot/descriptor_tables.c -o $(OBJF)/descriptor_tables.o $(CC_FLAGS)
