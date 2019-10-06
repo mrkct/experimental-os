@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <kernel/tty.h>
-
+#include <kernel/i686/descriptor_tables.h>
  
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)

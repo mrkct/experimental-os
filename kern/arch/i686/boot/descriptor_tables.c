@@ -1,11 +1,12 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <kernel/i386/descriptor_tables.h>
+#include <kernel/i686/descriptor_tables.h>
 #define GDT_ENTRIES 5
 
 
 extern void gdt_flush(uint32_t);
+static void gdt_set_gate(int32_t, uint32_t, uint32_t, uint8_t, uint8_t);
 
 gdt_entry_t gdt_entries[GDT_ENTRIES];
 gdt_ptr_t   gdt_ptr;
