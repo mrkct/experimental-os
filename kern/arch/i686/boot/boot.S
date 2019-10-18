@@ -21,6 +21,9 @@ stack_top:
 
 # The kernel entry point.
 .section .text
+
+.include "interrupt.S"
+
 .global _start
 .type _start, @function
 _start:
@@ -53,5 +56,11 @@ gdt_flush:
 flush:
    ret
 
+.global load_idt
+
+load_idt:
+   mov 4(%esp), %eax
+   lidt (%eax)
+   ret
 
 .size _start, . - _start

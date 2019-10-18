@@ -113,7 +113,7 @@ void terminal_writeint(int data, const int base)
 		data /= base;
 	} while (data != 0); 
 	
-	if (is_negative)
+	if (is_negative && base == 10)
 		terminal_putchar('-');
 	
 	for (i = i+1; i < 10; i++) {

@@ -2,14 +2,14 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <kernel/tty.h>
+#include <kernel/kprintf.h>
 #include <kernel/i686/descriptor_tables.h>
  
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
 #endif
- 
-/* This tutorial will only work for the 32-bit ix86 targets. */
+
 #if !defined(__i386__)
 #error "This tutorial needs to be compiled with a ix86-elf compiler"
 #endif
@@ -18,12 +18,48 @@
 void kernel_setup(void)
 {
     terminal_initialize();
-    terminal_writestring("Setting up the GDT...");
+
+    kprintf("Setting up the GDT...");
     init_gdt();
-    terminal_writestring("done!\n");
+    kprintf("done!\n");
+    kprintf("Setting up the IDT...");
+    init_idt();
+    kprintf("done\n");
+
+    kprintf("-----------------------------\n");
 }
 
 void kernel_main(void) 
 {
-	terminal_writestring("Hello, kernel World!\n");
+	kprintf("Hello, kernel World!\n");
+    kprintf("How are you?\n");
+    for (int i = 0; i < 5; i++)
+        asm("int $50");
+    
+    while (true) {
+        // we don't let this go because after this we
+        // disable interrupts and hang. we want to test
+        // if we handle interrupts correctly
+    }
+}
+
+void step()
+{
+    static int i = 0;
+    kprintf("step: %d\n", i);
+
+    volatile long long k = 0;
+    for (int j=0; j < 2; j++) {
+        k = 0;
+        while (k < 100000000)
+            k++;
+    }
+}
+
+void kassert(bool condition, char *message)
+{
+    if (!condition) {
+        kprintf("[kassert]: %s", message);
+        while (true);
+    }
 }
