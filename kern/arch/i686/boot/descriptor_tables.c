@@ -3,8 +3,10 @@
 #include <stdint.h>
 #include <kernel/tty.h>
 #include <kernel/i686/descriptor_tables.h>
+#include <kernel/i686/pic.h>
 #define GDT_ENTRIES 5
 #define IDT_ENTRIES 256
+#define IRQ_OFFSET 32
 
 
 int kprintf(char*, ...);
@@ -115,6 +117,9 @@ void interrupt_handler(struct intframe_t *frameptr)
         frame.int_no, 
         frame.err_code
     );
+    if (frame.int_no >= IRQ_OFFSET) {
+        pic_ack(frame.int_no);
+    }
 }
 
 extern uint32_t handlers[IDT_ENTRIES];
@@ -142,4 +147,6 @@ void init_idt()
     }
 
     load_idt((uint32_t) &idt_desc);
+    pic_init(IRQ_OFFSET);
+    asm("sti");
 }

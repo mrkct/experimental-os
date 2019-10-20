@@ -14,6 +14,7 @@ $(OBJF)/kernel.o \
 $(OBJF)/tty.o \
 $(OBJF)/kprintf.o \
 $(OBJF)/descriptor_tables.o \
+$(OBJF)/pic.o \
 
 .PHONY: build release run clean config create-sysroot
 
@@ -25,7 +26,7 @@ create-sysroot: config
 
 build: myos.bin
 
-myos.bin: create-sysroot boot.o kernel.o tty.o kprintf.o descriptor_tables.o
+myos.bin: create-sysroot boot.o kernel.o tty.o kprintf.o descriptor_tables.o pic.o
 	$(CC) -T linker.ld -o myos.bin $(OBJECT_FILES) $(LD_FLAGS)
 
 build-iso: myos.bin
@@ -61,3 +62,6 @@ descriptor_tables.o: config
 
 kprintf.o: config
 	$(CC) -c kern/kernel/kprintf.c -o $(OBJF)/kprintf.o $(CC_FLAGS)
+
+pic.o: config
+	$(CC) -c kern/arch/i686/pic.c -o $(OBJF)/pic.o $(CC_FLAGS)
