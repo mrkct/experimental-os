@@ -1,6 +1,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <kernel/kassert.h>
 #include <kernel/i686/x86.h>
 #include <kernel/i686/pic.h>
 
@@ -21,7 +22,7 @@ static uint32_t irq_offset = 0;
 void pic_init(uint8_t offset)
 {
 	if (offset < 16 || offset > 256 - 16) {
-		// TODO: Warn that this is not legal
+		panic("offset needs to be a value between 16 and 239");
 		return ;
 	}
 	uint8_t mask1, mask2;
@@ -54,7 +55,7 @@ void pic_init(uint8_t offset)
 void pic_ack(uint32_t irq_number)
 {
 	if (irq_offset == 0) {
-		// TODO: Warning, you have not called pic_init before this
+		panic("pic_init was not called before pic_ack");
 		return ;
 	}
 	if (irq_number >= irq_offset + 8) {
