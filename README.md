@@ -3,16 +3,6 @@ There is not much here.
 
 ## Next steps
 
-anche se `interrupt.s` è compilato e linkato sembra che il suo contenuto non è neanche visto dagli altri.
-per verificare se è vero:
-    - forse gcc toglie tutto perchè non viene usato niente adesso?
-    - aggiungi una funzione e chiamala dal C per verificare --> è vero
-se effettivamente è ignorato possiamo:
-    - buttare tutto in `boot.s`
-    - cercare di fixare, magari con .include
-        - prima non andava .include "interrupt.s" dicendo che non trova il file
-        - leggiti la documentazione
-
 ## How to run
 Prepare a cross-compiler for i686-elf.  
 Add to your variables

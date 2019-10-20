@@ -10,17 +10,17 @@
 #define PIC2_DATA		0xA1
 
 
-static uint8_t irq_offset = 0;
+static uint32_t irq_offset = 0;
 
 /*
-	Reprograms the PIC to route external interrupts from the 
+	Reprograms the PIC to route the 16 external interrupts from the 
 	argument offset. This is required, as the PIC 8259 by defaults routes 
 	those in the first 16 interrupts, which are reserved by Intel. As such, 
-	offset needs to be at least > 16
+	offset needs to be a number between [32, 255 - 16]
 */
 void pic_init(uint8_t offset)
 {
-	if (offset < 16) {
+	if (offset < 16 || offset > 256 - 16) {
 		// TODO: Warn that this is not legal
 		return ;
 	}

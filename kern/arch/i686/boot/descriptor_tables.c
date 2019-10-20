@@ -1,53 +1,19 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <kernel/i686/int.h>
 #include <kernel/tty.h>
 #include <kernel/i686/descriptor_tables.h>
 #include <kernel/i686/pic.h>
+#include <kernel/i686/irq.h>
 #define GDT_ENTRIES 5
 #define IDT_ENTRIES 256
-#define IRQ_OFFSET 32
 
 
 int kprintf(char*, ...);
 void kassert(bool, char *);
 
-static inline const char *get_exception_message(uint32_t code)
-{
-    const char *messages[] = {
-        "Divide-by-zero Error",
-        "Debug",
-        "Non-maskable Interrupt",
-        "Breakpoint",
-        "Overflow",
-        "Bound Range Exceeded",
-        "Invalid Opcode",
-        "Device Not Available",
-        "Double Fault",
-        "Coprocessor Segment Overrun",
-        "Invalid TSS",
-        "Segment Not Present",
-        "Stack-Segment Fault",
-        "General Protection Fault",
-        "Page Fault",
-        "[Intel Reserved]",
-        "x87 Floating-Point Exception",
-        "Alignment Check",
-        "Machine Check",
-        "SIMD Floating-Point Exception",
-        "Virtualization Exception",
-        "[Intel Reserved]",
-        "Security Exception",
-        "[Intel Reserved]",
-        "Triple Fault",
-        "FPU Error Interrupt"
-    };
-    if (code < 26) {
-        return messages[code];
-    } else {
-        return "Unknown Interrupt";
-    }
-}
+
 
 
 extern void gdt_flush(uint32_t);
@@ -109,16 +75,17 @@ static int count = 0;
 
 void interrupt_handler(struct intframe_t *frameptr)
 {
-    struct intframe_t frame = *frameptr;
-    kprintf(
-        "[%d] %s: %d - %d\n", 
-        count++, 
-        get_exception_message(frame.int_no), 
-        frame.int_no, 
-        frame.err_code
-    );
-    if (frame.int_no >= IRQ_OFFSET) {
-        pic_ack(frame.int_no);
+    if (frameptr->int_no < IRQ_OFFSET) {
+        kprintf(
+            "[%d] %s: %d - %d\n", 
+            count++, 
+            get_exception_message(frameptr->int_no), 
+            frameptr->int_no, 
+            frameptr->err_code
+        );
+    } else {
+        dispatch_irq(frameptr);
+        pic_ack(frameptr->int_no);
     }
 }
 

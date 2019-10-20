@@ -4,6 +4,7 @@
 #include <kernel/tty.h>
 #include <kernel/kprintf.h>
 #include <kernel/i686/descriptor_tables.h>
+#include <kernel/timer.h>
  
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
@@ -25,6 +26,7 @@ void kernel_setup(void)
     kprintf("Setting up the IDT...");
     init_idt();
     kprintf("done\n");
+    timer_init(1000);
 
     kprintf("-----------------------------\n");
 }
@@ -33,27 +35,8 @@ void kernel_main(void)
 {
 	kprintf("Hello, kernel World!\n");
     kprintf("How are you?\n");
-    for (int i = 0; i < 5; i++)
-        asm("int $50");
     
-    while (true) {
-        // we don't let this go because after this we
-        // disable interrupts and hang. we want to test
-        // if we handle interrupts correctly
-    }
-}
-
-void step()
-{
-    static int i = 0;
-    kprintf("step: %d\n", i);
-
-    volatile long long k = 0;
-    for (int j=0; j < 2; j++) {
-        k = 0;
-        while (k < 100000000)
-            k++;
-    }
+    kprintf("Reached end of kernel. Halting...");
 }
 
 void kassert(bool condition, char *message)
