@@ -1,6 +1,8 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
+#include <kernel/kassert.h>
+#include <kernel/kprintf.h>
 #include <kernel/i686/int.h>
 #include <kernel/tty.h>
 #include <kernel/i686/descriptor_tables.h>
@@ -8,12 +10,6 @@
 #include <kernel/i686/irq.h>
 #define GDT_ENTRIES 5
 #define IDT_ENTRIES 256
-
-
-int kprintf(char*, ...);
-void kassert(bool, char *);
-
-
 
 
 extern void gdt_flush(uint32_t);
@@ -103,8 +99,8 @@ static void set_idt_gate(int i, uint16_t selector, uint8_t type, uint32_t isr) {
 
 void init_idt()
 {
-    kassert(sizeof(idt_entry_t) == 8, "sizeof(idt_entry_t) != 8");
-    kassert(sizeof(idt_desc_t) == 6, "sizeof(idt_desc_it) != 6");
+    kassert(sizeof(idt_entry_t) == 8);
+    kassert(sizeof(idt_desc_t) == 6);
 
     idt_desc.size = (sizeof(idt_entry_t) * IDT_ENTRIES) - 1;
     idt_desc.ptr = (uint32_t) idt_entries;

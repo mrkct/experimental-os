@@ -35,10 +35,11 @@ void kernel_main(void)
 {
 	kprintf("Hello, kernel World!\n");
     kprintf("How are you?\n");
-    
+
     kprintf("Reached end of kernel. Halting...");
 }
 
+/*
 void kassert(bool condition, char *message)
 {
     if (!condition) {
@@ -46,3 +47,4 @@ void kassert(bool condition, char *message)
         while (true);
     }
 }
+*/
