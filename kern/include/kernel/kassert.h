@@ -3,7 +3,7 @@
 #include <kernel/kprintf.h>
 #define panic(error) do { _panic(__FILE__, __LINE__, error); } while (0)
 
-#define kassert(cond) do { if(!cond) panic(#cond); } while(0)
+#define kassert(cond) do { if(!(cond)) panic(#cond); } while(0)
 
 
 static void 
