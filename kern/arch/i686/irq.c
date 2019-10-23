@@ -6,6 +6,7 @@
 #include <kernel/i686/irq.h>
 #include <kernel/i686/int.h>
 #include <kernel/timer.h>
+#include <lib/input/keyboard.h>
 
 
 void dispatch_irq(struct intframe_t *intframe)
@@ -14,9 +15,11 @@ void dispatch_irq(struct intframe_t *intframe)
     case IRQ_TIMER:
         __timer_tick();
         break;
+    case IRQ_KEYBOARD:
+        __keyboard_irq();
+        break;
     default:
         kprintf("Unknown IRQ(%d - %d)\n", intframe->int_no, intframe->err_code);
-        asm("cli");
-        while (true) {}
+        
     }
 }

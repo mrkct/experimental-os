@@ -8,6 +8,7 @@
 */
 #define IRQ_OFFSET 32
 #define IRQ_TIMER       (IRQ_OFFSET + 0)
+#define IRQ_KEYBOARD    (IRQ_OFFSET + 1)
 
 
 static inline const char *get_exception_message(uint32_t code)
