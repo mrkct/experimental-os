@@ -32,6 +32,11 @@ int kprintf(char *format, ...)
             case 's':
                 terminal_writestring(va_arg(args, char*));
                 break;
+            case 'c':
+                // This is correct as 'int'. 
+                // 'char' gets promoted to 'int' when passed through '...'
+                terminal_putchar(va_arg(args, int));
+                break;
             default:
                 terminal_writestring("[kprintf: unknown specifier]");
                 break;
