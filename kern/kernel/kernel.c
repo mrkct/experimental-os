@@ -5,7 +5,9 @@
 #include <kernel/kprintf.h>
 #include <kernel/i686/descriptor_tables.h>
 #include <kernel/timer.h>
- 
+#include <lib/input/keyboard.h>
+
+
 /* Check if the compiler thinks you are targeting the wrong operating system. */
 #if defined(__linux__)
 #error "You are not using a cross-compiler, you will most certainly run into trouble"
@@ -35,6 +37,13 @@ void kernel_main(void)
 {
 	kprintf("Hello, kernel World!\n");
     kprintf("How are you?\n");
+
+    struct KeyAction action;
+    while (true) {
+        if (kbd_get_keyaction(&action) && action.pressed && action.character != 0) {
+            kprintf("%c", action.character);
+        }
+    }
 
     kprintf("Reached end of kernel. Halting...");
 }

@@ -17,7 +17,6 @@ $(OBJF)/descriptor_tables.o \
 $(OBJF)/pic.o \
 $(OBJF)/irq.o \
 $(OBJF)/timer.o \
-$(OBJF)/scancode.o \
 $(OBJF)/keyboard.o \
 
 
@@ -31,7 +30,7 @@ create-sysroot: config
 
 build: myos.bin
 
-myos.bin: create-sysroot boot.o kernel.o tty.o kprintf.o descriptor_tables.o pic.o irq.o timer.o scancode.o keyboard.o 
+myos.bin: create-sysroot boot.o kernel.o tty.o kprintf.o descriptor_tables.o pic.o irq.o timer.o keyboard.o 
 	$(CC) -T linker.ld -o myos.bin $(OBJECT_FILES) $(LD_FLAGS)
 
 build-iso: myos.bin
@@ -79,6 +78,3 @@ timer.o: config
 
 keyboard.o: config
 	$(CC) -c kern/lib/input/keyboard.c -o $(OBJF)/keyboard.o $(CC_FLAGS)
-
-scancode.o: config
-	$(CC) -c kern/lib/input/scancode.c -o $(OBJF)/scancode.o $(CC_FLAGS)
