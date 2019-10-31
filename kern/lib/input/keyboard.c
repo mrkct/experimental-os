@@ -10,9 +10,9 @@
     Represents the pressed status of all the keys. The index of a key is its
     KeyCode value.
 */
-bool keymap_status[256] = {0};
+static bool keymap_status[256] = {0};
 
-bool caps_lock_status = false;
+static bool caps_lock_status = false;
 
 /*
     TODO: Change this to a list when we will have a memory allocator.
@@ -136,15 +136,20 @@ void kbd_handle_scancode(Scancode scancode)
     action.scancode = scancode;
     action.pressed = keymap_status[keycode];
     // TODO:
-    /*
-    action.modifiers.shift      = keymap_status[KEY_SHIFT];
-    action.modifiers.shiftr     = keymap_status[KEY_SHIFTR];
     action.modifiers.capslock   = caps_lock_status;
-    action.modifiers.alt        = keymap_status[KEY_ALT];
-    action.modifiers.altgr      = keymap_status[KEY_ALTGR];
-    action.modifiers.ctrl       = keymap_status[KEY_CTRL];
-    action.modifiers.ctrlr      = keymap_status[KEY_CTRLR];
+    action.modifiers.shift      = keymap_status[KEYCODE_SHIFT];
+    /*
+    action.modifiers.shiftr     = keymap_status[KEYCODE_SHIFTR];
+    
+    action.modifiers.alt        = keymap_status[KEYCODE_ALT];
+    action.modifiers.altgr      = keymap_status[KEYCODE_ALTGR];
+    action.modifiers.ctrl       = keymap_status[KEYCODE_CTRL];
+    action.modifiers.ctrlr      = keymap_status[KEYCODE_CTRLR];
     */
+    if (keycode == KEYCODE_CAPSLOCK && action.pressed) {
+        caps_lock_status = !caps_lock_status;
+    }
+
     eventqueue_add(action);
 }
 
@@ -159,6 +164,9 @@ int kbd_get_keyaction(struct KeyAction *action)
     return eventqueue_read(action);
 }
 
+/*
+    Convers a scancode to a keycode, a 1byte generic identifier.
+*/
 KeyCode kbd_scancode_to_keycode(Scancode scancode)
 {
     /*
@@ -167,6 +175,12 @@ KeyCode kbd_scancode_to_keycode(Scancode scancode)
         map each key individually.
 
         See: https://wiki.osdev.org/PS2_Keyboard#Scan_Code_Set_1
+
+        The conversion is implemented as follow:
+        - single byte scancodes are returned with the 7th bit set to 0
+        - 2 bytes scancodes have their escape code 0'ed and the 7th bit set to 1
+        - the pause and print key are remapped to special constants
+          KEYCODE_PRINT and KEYCODE_PAUSE
     */
     // The 7th bit is used to represents if a key was pressed.
     // The same key pressed & released are still the same key though
@@ -190,7 +204,7 @@ KeyCode kbd_scancode_to_keycode(Scancode scancode)
     return scancode;
 }
 
-char charmap_normal[CHARMAP_SIZE] = {
+static char charmap_normal[CHARMAP_SIZE] = {
     0, 0, '1', '2', '3', '4', '5', '6', '7', '8', '9', '0', 
     '-', '=', '\b', '\t', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 
     'o', 'p', '[', ']', '\n', 0, 'a', 's', 'd', 'f', 'g', 'h', 
@@ -200,7 +214,7 @@ char charmap_normal[CHARMAP_SIZE] = {
     '7', '8', '9', '-', '4', '5', '6', '+', '1', '2', '3', '0', '.'
 };
 
-char charmap_shift[CHARMAP_SIZE] = {
+static char charmap_shift[CHARMAP_SIZE] = {
     0, 0, '!', '@', '#', '$', '%', '^', '&', '*', '(', ')', 
     '_', '+', '\b', '\t', 'Q', 'W', 'E', 'R', 'T', 'Y', 'U', 'I', 
     'O', 'P', '{', '}', '\n', 0, 'A', 'S', 'D', 'F', 'G', 'H', 
@@ -212,8 +226,12 @@ char charmap_shift[CHARMAP_SIZE] = {
 
 char kbd_keycode_to_char(KeyCode keycode)
 {
+    /*
+        TODO: Use a different keymap for caps lock. Expected behaviour is that
+        pressing the numbers with caps on should still write numbers
+    */
     char *charmap = charmap_normal;
-    if (keymap_status[KEY_SHIFT] && !caps_lock_status) {
+    if (keymap_status[KEYCODE_SHIFT] ^ caps_lock_status) {
         charmap = charmap_shift;
     }
     if (keycode < CHARMAP_SIZE)

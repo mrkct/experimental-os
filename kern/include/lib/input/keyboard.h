@@ -14,10 +14,13 @@
 
 #define CHARMAP_SIZE  0x55
 
-#define KEYCODE_PRINT 0xfe
-#define KEYCODE_PAUSE 0xff
+// TODO: #define all the keycodes
 
-#define KEY_SHIFT   0x2a
+#define KEYCODE_PRINT       0xfe
+#define KEYCODE_PAUSE       0xff
+
+#define KEYCODE_SHIFT       0x2a
+#define KEYCODE_CAPSLOCK    0x3a
 
 
 typedef uint64_t Scancode;
