@@ -2,3 +2,4 @@
 *.bin
 /sysroot
 /out
+notes_*.md
