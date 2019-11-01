@@ -1,14 +1,15 @@
+OS_NAME := "Experimental OS"	# The name that will appear in GRUB
 
-PROJECTS = kern
+PROJECTS := kern
 
 # The '-g' adds debugging symbols
-AS_FLAGS = -g
-CC_FLAGS = -std=gnu11 -ffreestanding -Wall -Wextra -g
-LD_FLAGS = -ffreestanding -nostdlib -lgcc -g
+AS_FLAGS := -g
+CC_FLAGS := -std=gnu11 -ffreestanding -Wall -Wextra -g
+LD_FLAGS := -ffreestanding -nostdlib -lgcc -g
 
-OBJF = out
+OBJF := out
 
-OBJECT_FILES = \
+OBJECT_FILES := \
 $(OBJF)/boot.o \
 $(OBJF)/kernel.o \
 $(OBJF)/tty.o \
@@ -20,7 +21,7 @@ $(OBJF)/timer.o \
 $(OBJF)/keyboard.o \
 
 
-.PHONY: build release run clean config create-sysroot
+.PHONY: build build-iso release run clean config create-sysroot
 
 config:
 	. ./config.sh
@@ -28,13 +29,13 @@ config:
 create-sysroot: config
 	. ./create-sysroot.sh
 
-build: myos.bin
+build: kernel.bin
 
-myos.bin: create-sysroot boot.o kernel.o tty.o kprintf.o descriptor_tables.o pic.o irq.o timer.o keyboard.o 
-	$(CC) -T linker.ld -o myos.bin $(OBJECT_FILES) $(LD_FLAGS)
+build-iso: kernel.bin
+	./build-iso.sh "kernel.bin" $(OS_NAME)
 
-build-iso: myos.bin
-	echo "guarda osdev barebones, non ho impostato"
+kernel.bin: create-sysroot boot.o kernel.o tty.o kprintf.o descriptor_tables.o pic.o irq.o timer.o keyboard.o 
+	$(CC) -T linker.ld -o kernel.bin $(OBJECT_FILES) $(LD_FLAGS)
 
 clean:
 	rm -f -R sysroot/
@@ -43,11 +44,11 @@ clean:
 	rm -f -R *.bin
 	rm -f -R *.iso
 
-run: myos.bin
-	qemu-system-i386 -kernel myos.bin -d guest_errors
+run: kernel.bin
+	qemu-system-i386 -kernel kernel.bin -d guest_errors
 
-run-gdb: myos.bin
-	qemu-system-i386 -kernel myos.bin -d guest_errors -s -S
+run-gdb: kernel.bin
+	qemu-system-i386 -kernel kernel.bin -d guest_errors -s -S
 
 boot.o: config
 	$(AS) kern/arch/i686/boot/boot.S -o $(OBJF)/boot.o $(AS_FLAGS) -I kern/arch/i686/boot

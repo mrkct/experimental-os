@@ -1,5 +1,8 @@
 *.o
 *.bin
+*.iso
 /sysroot
 /out
+/isodir
 notes_*.md
+grub.cfg
