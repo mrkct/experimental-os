@@ -60,6 +60,9 @@ void terminal_nextline(void)
                 terminal_buffer[VGA_WIDTH * (row-1) + col] = terminal_buffer[VGA_WIDTH * row + col];
             }
         }
+		for (size_t col = 0; col < VGA_WIDTH; col++) {
+			terminal_putentryat(' ', terminal_color, col, VGA_HEIGHT-1);
+		}
     }
 }
 
