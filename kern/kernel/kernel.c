@@ -6,6 +6,9 @@
 #include <kernel/i686/descriptor_tables.h>
 #include <kernel/timer.h>
 #include <lib/input/keyboard.h>
+#include <kernel/kassert.h>
+#include <kernel/i686/x86.h>
+#include <kernel/i686/memory.h>
 
 
 /* Check if the compiler thinks you are targeting the wrong operating system. */
@@ -18,7 +21,10 @@
 #endif
 
 
-void kernel_setup(void)
+
+#include <kernel/i686/multiboot.h>
+
+void kernel_setup(multiboot_info_t *mbd, unsigned int magic)
 {
     terminal_initialize();
 
@@ -29,6 +35,8 @@ void kernel_setup(void)
     init_idt();
     kprintf("done\n");
     timer_init(1000);
+
+    memory_init(mbd, magic);
 
     kprintf("-----------------------------\n");
 }
@@ -47,13 +55,3 @@ void kernel_main(void)
 
     kprintf("Reached end of kernel. Halting...");
 }
-
-/*
-void kassert(bool condition, char *message)
-{
-    if (!condition) {
-        kprintf("[kassert]: %s", message);
-        while (true);
-    }
-}
-*/

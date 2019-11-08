@@ -28,6 +28,14 @@ stack_top:
 .type _start, @function
 _start:
 	movl $stack_top, %esp
+   
+   /*
+      GRUB puts in %eax and %ebx a pointer to a data structure useful for 
+      detecting the available memory on the system. We push these 2 registers 
+      before everything else, so that we avoid accidentaly deleting them
+   */
+   push %eax
+   push %ebx
 
 	# Prepare the terminal, so that we can write to debug easier
 	call kernel_setup
