@@ -10,7 +10,7 @@
 #include <lib/input/keyboard.h>
 
 
-void keyboard_irq(struct intframe_t *intframe)
+void keyboard_irq(__attribute__((unused)) struct intframe_t *intframe)
 {
     unsigned char byte = inb(0x60);
     kbd_handle_byte(byte);
