@@ -9,19 +9,7 @@
 #include <kernel/kassert.h>
 #include <kernel/i686/x86.h>
 #include <kernel/i686/memory.h>
-
-
-/* Check if the compiler thinks you are targeting the wrong operating system. */
-#if defined(__linux__)
-#error "You are not using a cross-compiler, you will most certainly run into trouble"
-#endif
-
-#if !defined(__i386__)
-#error "This tutorial needs to be compiled with a ix86-elf compiler"
-#endif
-
-
-
+#include <kernel/monitor.h>
 #include <kernel/i686/multiboot.h>
 
 void kernel_setup(multiboot_info_t *mbd, unsigned int magic)
@@ -47,13 +35,21 @@ void kernel_setup(multiboot_info_t *mbd, unsigned int magic)
 
 void kernel_main(void) 
 {
-	kprintf("Hello, kernel World!\n");
-    kprintf("How are you?\n");
-
+    char buffer[1024];
+    int buffer_pos = 0;
     struct KeyAction action;
     while (true) {
         if (kbd_get_keyaction(&action) && action.pressed && action.character != 0) {
             kprintf("%c", action.character);
+            if (action.character == '\n') {
+                buffer[buffer_pos] = '\0';
+                if (!monitor_handle(buffer))
+                    kprintf("No commands with that name\n");
+                kprintf("> ");
+                buffer_pos = 0;
+            } else {
+                buffer[buffer_pos++] = action.character;
+            }
         }
     }
 

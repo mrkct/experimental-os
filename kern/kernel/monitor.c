@@ -1,0 +1,51 @@
+#include <stddef.h>
+#include <stdint.h>
+#include <stdbool.h>
+#include <kernel/monitor.h>
+#include <kernel/kprintf.h>
+#include <kernel/timer.h>
+
+
+static int strcmp(char *a, char *b)
+{
+    while (*a && *b && *a++ == *b++) {
+        ;
+    }
+    if (*a == '\0' && *b == '\0')
+        return 0;
+    else if (*a - *b < 0)
+        return -1;
+    else
+        return +1;
+}
+
+
+struct MonitorCommand commands[] = {
+    {"help", "Displays all available commands with their descriptions", monitor_help},
+    {"ticks", "Displays how many CPU ticks have occurred since boot", monitor_ticks}
+};
+
+int monitor_handle(char *command)
+{
+    for (int i = 0; i < sizeof(commands) / sizeof(commands[0]); i++) {
+        if (strcmp(commands[i].name, command) == 0) {
+            commands[i].function(command);
+            return 1;
+        }
+    }
+
+    return 0;
+}
+
+void monitor_help(char *arguments)
+{
+    kprintf("Here is a list of all availables commands:\n");
+    for (int i = 0; i < sizeof(commands) / sizeof(commands[0]); i++) {
+        kprintf("%s - %s\n", commands[i]);
+    }
+}
+
+void monitor_ticks(char *arguments)
+{
+    kprintf("%d\n", timer_get_ticks());
+}
