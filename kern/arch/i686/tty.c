@@ -2,6 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <kernel/tty.h>
+#include <kernel/i686/x86.h>
 
 #define TAB_SIZE 4
  
@@ -12,6 +13,8 @@ size_t strlen(const char* str)
 		len++;
 	return len;
 }
+
+static void update_cursor(void);
 
 static const size_t VGA_WIDTH = 80;
 static const size_t VGA_HEIGHT = 25;
@@ -44,6 +47,7 @@ void terminal_putentryat(char c, uint8_t color, size_t x, size_t y)
 {
 	const size_t index = y * VGA_WIDTH + x;
 	terminal_buffer[index] = vga_entry(c, color);
+	update_cursor();
 }
  
 /**
@@ -134,4 +138,14 @@ void terminal_clear(void)
 	for (size_t i = 0; i < VGA_WIDTH; i++)
 		for (size_t j = 0; j < VGA_HEIGHT; j++)
 			terminal_putentryat(' ', terminal_color, i, j);
+}
+
+static void update_cursor(void)
+{
+	uint16_t pos = terminal_row * VGA_WIDTH + (terminal_column+1);
+ 
+	outb(0x3D4, 0x0F);
+	outb(0x3D5, (uint8_t) (pos & 0xFF));
+	outb(0x3D4, 0x0E);
+	outb(0x3D5, (uint8_t) ((pos >> 8) & 0xFF));
 }
