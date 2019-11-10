@@ -19,4 +19,38 @@ static inline uint8_t inb(uint16_t port)
     return ret;
 }
 
+static inline unsigned long read_cr0(void)
+{
+    unsigned long val;
+    asm volatile ( "mov %%cr0, %0" : "=r"(val) );
+    return val;
+}
+
+static inline unsigned long read_cr3(void)
+{
+    unsigned long val;
+    asm volatile ( "mov %%cr3, %0" : "=r"(val) );
+    return val;
+}
+
+static inline void load_cr0(unsigned long cr0)
+{
+    asm volatile ( 
+        "mov %0, %%eax\n\t"
+        "mov %%eax, %%cr0"
+        :
+        : "a" (cr0)
+    );
+}
+
+static inline void load_cr3(unsigned long cr3)
+{
+    asm volatile ( 
+        "mov %0, %%eax\n\t"
+        "mov %%eax, %%cr3"
+        :
+        : "a" (cr3)
+    );
+}
+
 #endif

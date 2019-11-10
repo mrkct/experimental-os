@@ -30,13 +30,17 @@ void kernel_setup(multiboot_info_t *mbd, unsigned int magic)
 
     kprintf("Setting up the GDT...");
     init_gdt();
-    kprintf("done!\n");
+    kprintf("done\n");
     kprintf("Setting up the IDT...");
     init_idt();
     kprintf("done\n");
+    kprintf("Setting up the timer...");
     timer_init(1000);
-
+    kprintf("done\n");
+    kprintf("Setting up paging...");
     memory_init(mbd, magic);
+    kprintf("done\n");
+    kprintf("Detected %d MB of total memory\n", (get_total_memory() / 1024) / 1024);
 
     kprintf("-----------------------------\n");
 }
