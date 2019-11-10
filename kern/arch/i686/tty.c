@@ -82,7 +82,11 @@ void terminal_putchar(char c)
         for (int i = 0; i < TAB_SIZE; i++)
             terminal_putchar(' ');
         return;
-    }
+    } else if (c == '\b') {
+		terminal_column = terminal_column > 0 ? terminal_column - 1 : 0 ;
+		terminal_putentryat(' ', terminal_color, terminal_column, terminal_row);
+		return;
+	}
     
 	terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
 	if (++terminal_column == VGA_WIDTH) {
