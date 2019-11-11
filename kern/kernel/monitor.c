@@ -4,6 +4,7 @@
 #include <kernel/monitor.h>
 #include <kernel/kprintf.h>
 #include <kernel/timer.h>
+#include <kernel/i686/memory.h>
 
 
 static int strcmp(char *a, char *b)
@@ -22,7 +23,8 @@ static int strcmp(char *a, char *b)
 
 struct MonitorCommand commands[] = {
     {"help", "Displays all available commands with their descriptions", monitor_help},
-    {"ticks", "Displays how many CPU ticks have occurred since boot", monitor_ticks}
+    {"ticks", "Displays how many CPU ticks have occurred since boot", monitor_ticks},
+    {"system", "Displays various info about the system", monitor_system}
 };
 
 int monitor_handle(char *command)
@@ -48,4 +50,9 @@ void monitor_help(char *arguments)
 void monitor_ticks(char *arguments)
 {
     kprintf("%d\n", timer_get_ticks());
+}
+
+void monitor_system(char *arguments)
+{
+    kprintf("Detected memory: %d MB\n", get_total_memory() / 1024 / 1024);
 }

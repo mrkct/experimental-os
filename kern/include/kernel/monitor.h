@@ -12,5 +12,6 @@ int monitor_handle(char *);
 
 void monitor_help(char *);
 void monitor_ticks(char *);
+void monitor_system(char *);
 
 #endif
