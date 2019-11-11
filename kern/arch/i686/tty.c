@@ -1,18 +1,12 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
+#include <lib/klibc/string.h>
 #include <kernel/tty.h>
 #include <kernel/i686/x86.h>
 
+
 #define TAB_SIZE 4
- 
-size_t strlen(const char* str) 
-{
-	size_t len = 0;
-	while (str[len])
-		len++;
-	return len;
-}
 
 static void update_cursor(void);
 

@@ -4,21 +4,8 @@
 #include <kernel/monitor.h>
 #include <kernel/kprintf.h>
 #include <kernel/timer.h>
+#include <lib/klibc/string.h>
 #include <kernel/i686/memory.h>
-
-
-static int strcmp(char *a, char *b)
-{
-    while (*a && *b && *a++ == *b++) {
-        ;
-    }
-    if (*a == '\0' && *b == '\0')
-        return 0;
-    else if (*a - *b < 0)
-        return -1;
-    else
-        return +1;
-}
 
 
 struct MonitorCommand commands[] = {
