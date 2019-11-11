@@ -21,6 +21,7 @@ $(OBJF)/timer.o \
 $(OBJF)/keyboard.o \
 $(OBJF)/memory.o \
 $(OBJF)/monitor.o \
+$(OBJF)/string.o \
 
 
 .PHONY: build build-iso release run clean config create-sysroot
@@ -36,7 +37,7 @@ build: kernel.bin
 build-iso: kernel.bin
 	./build-iso.sh "kernel.bin" $(OS_NAME)
 
-kernel.bin: create-sysroot boot.o kernel.o tty.o kprintf.o descriptor_tables.o pic.o irq.o timer.o keyboard.o memory.o monitor.o 
+kernel.bin: create-sysroot boot.o kernel.o tty.o kprintf.o descriptor_tables.o pic.o irq.o timer.o keyboard.o memory.o monitor.o string.o 
 	$(CC) -T linker.ld -o kernel.bin $(OBJECT_FILES) $(LD_FLAGS)
 
 clean:
@@ -87,3 +88,6 @@ memory.o: config
 
 monitor.o: config
 	$(CC) -c kern/kernel/monitor.c -o $(OBJF)/monitor.o $(CC_FLAGS)
+
+string.o: config
+	$(CC) -c kern/lib/klibc/string.c -o $(OBJF)/string.o $(CC_FLAGS)
