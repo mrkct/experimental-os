@@ -8,7 +8,7 @@
 #include <lib/input/keyboard.h>
 #include <kernel/kassert.h>
 #include <kernel/i686/x86.h>
-#include <kernel/i686/memory.h>
+#include <kernel/memory/memory.h>
 #include <kernel/monitor.h>
 #include <kernel/i686/multiboot.h>
 
@@ -28,7 +28,7 @@ void kernel_setup(multiboot_info_t *mbd, unsigned int magic)
     kprintf("Setting up paging...");
     memory_init(mbd, magic);
     kprintf("done\n");
-    kprintf("Detected %d MB of total memory\n", (get_total_memory() / 1024) / 1024);
+    kprintf("Detected %d MB of total memory\n", (memory_get_total() / 1024) / 1024);
 
     kprintf("-----------------------------\n");
 }

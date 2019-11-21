@@ -5,7 +5,7 @@
 #include <kernel/kprintf.h>
 #include <kernel/timer.h>
 #include <lib/klibc/string.h>
-#include <kernel/i686/memory.h>
+#include <kernel/memory/memory.h>
 
 
 struct MonitorCommand commands[] = {
@@ -41,5 +41,5 @@ void monitor_ticks(char *arguments)
 
 void monitor_system(char *arguments)
 {
-    kprintf("Detected memory: %d MB\n", get_total_memory() / 1024 / 1024);
+    kprintf("Detected memory: %d MB\n", memory_get_total() / 1024 / 1024);
 }

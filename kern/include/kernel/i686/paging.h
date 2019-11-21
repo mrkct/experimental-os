@@ -1,10 +1,10 @@
-#ifndef MEMORY_H
-#define MEMORY_H
+#ifndef PAGING_H
+#define PAGING_H
 
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <kernel/i686/multiboot.h>
+#include <kernel/memory/memory.h>
 
 /*
     TODO: Setting this to the full 4GB makes the boot insanely slow. But if we 
@@ -12,9 +12,6 @@
     a fix
 */
 #define ADDRESS_SPACE_SIZE  (256 * 1024 * 1024)
-
-typedef uint32_t paddr_t;
-typedef uint32_t vaddr_t;
 
 #define PGSIZE          4096
 #define PGSHIFT         12
@@ -57,12 +54,7 @@ struct PageInfo {
     struct PageInfo *nextfree;
 };
 
-uint32_t get_total_memory(void);
-void *boot_alloc(size_t);
-void pages_init(multiboot_info_t*);
-uint32_t multiboot_get_memory(multiboot_info_t*, uint32_t);
-void memory_init(multiboot_info_t*, uint32_t);
-void multiboot_detect_available_pages(multiboot_info_t*);
+void paging_init(multiboot_info_t *);
 
 struct PageInfo *page_alloc(void);
 void page_free(struct PageInfo*);
@@ -76,8 +68,8 @@ pte_t *pgdir_addr2entry(pdir_t, paddr_t);
 void pgdir_map(pdir_t, uint32_t, unsigned long, uint32_t, uint16_t);
 pte_t *pgdir_addr2entry(pdir_t, paddr_t);
 
-void pgdir_print(pdir_t pgdir, int how_many);
-void load_pgdir(pdir_t pgdir);
+void paging_load(pdir_t pgdir);
+pdir_t paging_kernel_pgdir();
 
 static inline uint32_t ROUNDUP(uint32_t value, uint32_t multiple)
 {
