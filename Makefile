@@ -7,23 +7,37 @@ AS_FLAGS := -g
 CC_FLAGS := -std=gnu11 -ffreestanding -Wall -Wextra -g
 LD_FLAGS := -ffreestanding -nostdlib -lgcc -g
 
-OBJF := out
+OUTF := out
 
-OBJECT_FILES := \
-$(OBJF)/boot.o \
-$(OBJF)/kernel.o \
-$(OBJF)/tty.o \
-$(OBJF)/kprintf.o \
-$(OBJF)/descriptor_tables.o \
-$(OBJF)/pic.o \
-$(OBJF)/irq.o \
-$(OBJF)/timer.o \
-$(OBJF)/keyboard.o \
-$(OBJF)/memory.o \
-$(OBJF)/paging.o \
-$(OBJF)/monitor.o \
-$(OBJF)/string.o \
+# To add another file to the project just add the path to its source here
+# If you don't want to specify all files you can change this into
+# CSOURCES = $(shell find ./ -name "*.c")
 
+CSOURCES = \
+	./kern/arch/i686/boot/descriptor_tables.c \
+	./kern/arch/i686/irq.c \
+	./kern/arch/i686/paging.c \
+	./kern/arch/i686/pic.c \
+	./kern/arch/i686/timer.c \
+	./kern/arch/i686/tty.c \
+	./kern/kernel/kernel.c \
+	./kern/kernel/kprintf.c \
+	./kern/kernel/memory/memory.c \
+	./kern/kernel/monitor.c \
+	./kern/lib/input/keyboard.c \
+	./kern/lib/klibc/string.c \
+
+# ./kern/arch/i686/boot/interrupt.S is not included here because it is
+# included directly in the file by boot.S .
+# WARNING: If you need to build an assembly file adding it here is not enough:
+# you also need to create a rule for it, otherwise it will be treated like a 
+# C source file and compiled with gcc. Will fix later
+
+ASMSOURCES = \
+	./kern/arch/i686/boot/boot.S \
+
+
+OBJECT_FILES = $(patsubst %.c, %.o, $(CSOURCES)) $(patsubst %.S, %.o, $(ASMSOURCES))
 
 .PHONY: build build-iso release run clean config create-sysroot
 
@@ -38,12 +52,12 @@ build: kernel.bin
 build-iso: kernel.bin
 	./build-iso.sh "kernel.bin" $(OS_NAME)
 
-kernel.bin: create-sysroot boot.o kernel.o tty.o kprintf.o descriptor_tables.o pic.o irq.o timer.o keyboard.o memory.o monitor.o string.o paging.o 
-	$(CC) -T linker.ld -o kernel.bin $(OBJECT_FILES) $(LD_FLAGS)
+kernel.bin: create-sysroot $(OBJECT_FILES) 
+	$(CC) -T linker.ld -o kernel.bin $(patsubst %.o, $(OUTF)/%.o, $(OBJECT_FILES)) $(LD_FLAGS)
 
 clean:
 	rm -f -R sysroot/
-	rm -f -R $(OBJF)/
+	rm -f -R $(OUTF)/
 	rm -f -R *.o
 	rm -f -R *.bin
 	rm -f -R *.iso
@@ -54,44 +68,12 @@ run: kernel.bin
 run-gdb: kernel.bin
 	qemu-system-i386 -kernel kernel.bin -d guest_errors -s -S
 
-boot.o: config
-	$(AS) kern/arch/i686/boot/boot.S -o $(OBJF)/boot.o $(AS_FLAGS) -I kern/arch/i686/boot
-
-interrupt.o: config
-	$(AS) kern/arch/i686/boot/interrupt.S -o $(OBJF)/interrupt.o $(AS_FLAGS)
+kern/arch/i686/boot/boot.o: config
+	$(AS) kern/arch/i686/boot/boot.S -o $(OUTF)/kern/arch/i686/boot/boot.o $(AS_FLAGS) -I kern/arch/i686/boot
 
 kernel.o: config
-	$(CC) -c kern/kernel/kernel.c -o $(OBJF)/kernel.o $(CC_FLAGS)
+	$(CC) -c kern/kernel/kernel.c -o $(OUTF)/kern/kernel/kernel.o $(CC_FLAGS)
 
-tty.o: config
-	$(CC) -c kern/arch/i686/tty.c -o $(OBJF)/tty.o $(CC_FLAGS)
-
-descriptor_tables.o: config
-	$(CC) -c kern/arch/i686/boot/descriptor_tables.c -o $(OBJF)/descriptor_tables.o $(CC_FLAGS)
-
-kprintf.o: config
-	$(CC) -c kern/kernel/kprintf.c -o $(OBJF)/kprintf.o $(CC_FLAGS)
-
-pic.o: config
-	$(CC) -c kern/arch/i686/pic.c -o $(OBJF)/pic.o $(CC_FLAGS)
-
-irq.o: config
-	$(CC) -c kern/arch/i686/irq.c -o $(OBJF)/irq.o $(CC_FLAGS)
-
-timer.o: config
-	$(CC) -c kern/arch/i686/timer.c -o $(OBJF)/timer.o $(CC_FLAGS)
-
-keyboard.o: config
-	$(CC) -c kern/lib/input/keyboard.c -o $(OBJF)/keyboard.o $(CC_FLAGS)
-
-memory.o: config
-	$(CC) -c kern/kernel/memory/memory.c -o $(OBJF)/memory.o $(CC_FLAGS)
-
-paging.o: config
-	$(CC) -c kern/arch/i686/paging.c -o $(OBJF)/paging.o $(CC_FLAGS)
-
-monitor.o: config
-	$(CC) -c kern/kernel/monitor.c -o $(OBJF)/monitor.o $(CC_FLAGS)
-
-string.o: config
-	$(CC) -c kern/lib/klibc/string.c -o $(OBJF)/string.o $(CC_FLAGS)
+%.o: %.c config create-sysroot
+	mkdir -p $(OUTF)/$(shell dirname $@)
+	$(CC) -c $(CC_FLAGS) $< -o $(OUTF)/$@ 
