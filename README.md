@@ -17,13 +17,16 @@ Run `make build` to create a .bin you can run with qemu.
 Run `make run` to build and run qemu with that bin.  
 Run `make build-iso` to create a .iso image. Requires having xorriso installed though.  
 
+If you need to add another source file to the codebase you can just edit the Makefile and add the path to the new 
+source code to the CSOURCES variable. 
+
 ## Done stuff
 - Setups a GDT & IDT
 - External interrupt support
 - Clock & PS2 Keyboard drivers with the PIC 8259
+- Paging, even though it's only a simple identity mapping
 
 ## Todo
-- Virtual memory
 - Dynamic memory allocator
 - A filesystem:
     - At first a virtual one, in RAM
