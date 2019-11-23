@@ -1,16 +1,16 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <kernel/tty.h>
-#include <kernel/kprintf.h>
-#include <kernel/i686/descriptor_tables.h>
-#include <kernel/timer.h>
-#include <lib/input/keyboard.h>
-#include <kernel/kassert.h>
-#include <kernel/i686/x86.h>
+#include <kernel/devices/tty/tty.h>
+#include <kernel/lib/kprintf.h>
+#include <kernel/arch/i386/boot/descriptor_tables.h>
+#include <kernel/devices/timer/timer.h>
+#include <kernel/devices/ps2kb/keyboard.h>
+#include <kernel/lib/kassert.h>
+#include <kernel/arch/i386/x86.h>
 #include <kernel/memory/memory.h>
 #include <kernel/monitor.h>
-#include <kernel/i686/multiboot.h>
+#include <kernel/arch/multiboot.h>
 
 void kernel_setup(multiboot_info_t *mbd, unsigned int magic)
 {

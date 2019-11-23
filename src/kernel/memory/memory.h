@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <kernel/i686/multiboot.h>
+#include <kernel/arch/multiboot.h>
 
 /*
     TODO: Change this into the memory address where the kernel ends in 

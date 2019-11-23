@@ -1,9 +1,9 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <kernel/kassert.h>
+#include <kernel/lib/kassert.h>
 #include <kernel/memory/memory.h>
-#include <kernel/i686/paging.h>
+#include <kernel/arch/i386/paging.h>
 
 
 static uint32_t base_memory;

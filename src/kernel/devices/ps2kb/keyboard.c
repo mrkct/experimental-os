@@ -1,8 +1,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <kernel/kassert.h>
-#include <lib/input/keyboard.h>
+#include <kernel/lib/kassert.h>
+#include <kernel/devices/ps2kb/keyboard.h>
 
 #define EVENTQUEUE_SIZE 256
 

@@ -2,7 +2,7 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdarg.h>
-#include <kernel/tty.h>
+#include <kernel/devices/tty/tty.h>
 
 
 int kprintf(char *format, ...)

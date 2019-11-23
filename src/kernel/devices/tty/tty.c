@@ -1,9 +1,9 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <lib/klibc/string.h>
-#include <kernel/tty.h>
-#include <kernel/i686/x86.h>
+#include <klibc/string.h>
+#include <kernel/devices/tty/tty.h>
+#include <kernel/arch/i386/x86.h>
 
 
 #define TAB_SIZE 4

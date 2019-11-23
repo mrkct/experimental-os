@@ -1,8 +1,8 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
-#include <kernel/i686/x86.h>
-#include <kernel/timer.h>
+#include <kernel/arch/i386/x86.h>
+#include <kernel/devices/timer/timer.h>
 
 
 uint32_t ticks = 0;

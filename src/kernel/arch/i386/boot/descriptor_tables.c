@@ -1,13 +1,13 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <kernel/kassert.h>
-#include <kernel/kprintf.h>
-#include <kernel/i686/int.h>
-#include <kernel/tty.h>
-#include <kernel/i686/descriptor_tables.h>
-#include <kernel/i686/pic.h>
-#include <kernel/i686/irq.h>
+#include <kernel/lib/kassert.h>
+#include <kernel/lib/kprintf.h>
+#include <kernel/arch/i386/int.h>
+#include <kernel/devices/tty/tty.h>
+#include <kernel/arch/i386/boot/descriptor_tables.h>
+#include <kernel/arch/i386/pic.h>
+#include <kernel/arch/i386/irq.h>
 #define GDT_ENTRIES 5
 #define IDT_ENTRIES 256
 

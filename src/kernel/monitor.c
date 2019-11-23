@@ -2,9 +2,9 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <kernel/monitor.h>
-#include <kernel/kprintf.h>
-#include <kernel/timer.h>
-#include <lib/klibc/string.h>
+#include <kernel/lib/kprintf.h>
+#include <kernel/devices/timer/timer.h>
+#include <klibc/string.h>
 #include <kernel/memory/memory.h>
 
 

@@ -1,9 +1,9 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <kernel/kassert.h>
-#include <kernel/i686/x86.h>
-#include <kernel/i686/pic.h>
+#include <kernel/lib/kassert.h>
+#include <kernel/arch/i386/x86.h>
+#include <kernel/arch/i386/pic.h>
 
 #define PIC1_COMMAND	0x20
 #define PIC1_DATA		0x21

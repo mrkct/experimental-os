@@ -1,7 +1,5 @@
 OS_NAME := "Experimental OS"	# The name that will appear in GRUB
 
-PROJECTS := kern
-
 # The '-g' adds debugging symbols
 AS_FLAGS := -g
 CC_FLAGS := -std=gnu11 -ffreestanding -Wall -Wextra -g
@@ -14,18 +12,18 @@ OUTF := out
 # CSOURCES = $(shell find ./ -name "*.c")
 
 CSOURCES = \
-	./kern/arch/i686/boot/descriptor_tables.c \
-	./kern/arch/i686/irq.c \
-	./kern/arch/i686/paging.c \
-	./kern/arch/i686/pic.c \
-	./kern/arch/i686/timer.c \
-	./kern/arch/i686/tty.c \
-	./kern/kernel/kernel.c \
-	./kern/kernel/kprintf.c \
-	./kern/kernel/memory/memory.c \
-	./kern/kernel/monitor.c \
-	./kern/lib/input/keyboard.c \
-	./kern/lib/klibc/string.c \
+	src/kernel/arch/i386/boot/descriptor_tables.c \
+	src/kernel/arch/i386/irq.c \
+	src/kernel/arch/i386/paging.c \
+	src/kernel/arch/i386/pic.c \
+	src/kernel/devices/ps2kb/keyboard.c \
+	src/kernel/devices/timer/timer.c \
+	src/kernel/devices/tty/tty.c \
+	src/kernel/kernel.c \
+	src/kernel/lib/kprintf.c \
+	src/kernel/memory/memory.c \
+	src/kernel/monitor.c \
+	src/klibc/string.c \
 
 # ./kern/arch/i686/boot/interrupt.S is not included here because it is
 # included directly in the file by boot.S .
@@ -34,7 +32,7 @@ CSOURCES = \
 # C source file and compiled with gcc. Will fix later
 
 ASMSOURCES = \
-	./kern/arch/i686/boot/boot.S \
+	./src/kernel/arch/i386/boot/boot.S \
 
 
 OBJECT_FILES = $(patsubst %.c, %.o, $(CSOURCES)) $(patsubst %.S, %.o, $(ASMSOURCES))
@@ -68,11 +66,8 @@ run: kernel.bin
 run-gdb: kernel.bin
 	qemu-system-i386 -kernel kernel.bin -d guest_errors -s -S
 
-kern/arch/i686/boot/boot.o: config
-	$(AS) kern/arch/i686/boot/boot.S -o $(OUTF)/kern/arch/i686/boot/boot.o $(AS_FLAGS) -I kern/arch/i686/boot
-
-kernel.o: config
-	$(CC) -c kern/kernel/kernel.c -o $(OUTF)/kern/kernel/kernel.o $(CC_FLAGS)
+./src/kernel/arch/i386/boot/boot.o: config
+	$(AS) src/kernel/arch/i386/boot/boot.S -o $(OUTF)/src/kernel/arch/i386/boot/boot.o $(AS_FLAGS) -I src/kernel/arch/i386/boot/
 
 %.o: %.c config create-sysroot
 	mkdir -p $(OUTF)/$(shell dirname $@)

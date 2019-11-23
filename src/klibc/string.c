@@ -1,6 +1,6 @@
 #include <stddef.h>
 #include <stdint.h>
-#include <lib/klibc/string.h>
+#include <klibc/string.h>
 
 
 

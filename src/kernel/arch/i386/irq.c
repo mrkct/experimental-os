@@ -1,13 +1,13 @@
 #include <stddef.h>
 #include <stdbool.h>
 #include <stdint.h>
-#include <kernel/i686/descriptor_tables.h>
-#include <kernel/kprintf.h>
-#include <kernel/i686/x86.h>
-#include <kernel/i686/irq.h>
-#include <kernel/i686/int.h>
-#include <kernel/timer.h>
-#include <lib/input/keyboard.h>
+#include <kernel/arch/i386/boot/descriptor_tables.h>
+#include <kernel/lib/kprintf.h>
+#include <kernel/arch/i386/x86.h>
+#include <kernel/arch/i386/irq.h>
+#include <kernel/arch/i386/int.h>
+#include <kernel/devices/timer/timer.h>
+#include <kernel/devices/ps2kb/keyboard.h>
 
 
 void keyboard_irq(__attribute__((unused)) struct intframe_t *intframe)
