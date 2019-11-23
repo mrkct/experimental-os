@@ -2,6 +2,13 @@
 This is an unnamed operating system I'm creating mostly to try out stuff for fun.
 There is not much it can do and it was not tested on real hardware (yet).
 
+## How to try it
+The quickest way is to download the latest build from the release tab. Right now the os 
+only has support for the qemu virtual machine hardware, so it might not work in other emulators.
+To run with qemu just run
+
+    qemu-system-i386 -cdrom 'Experimental OS.iso'
+
 ## How to run
 Prepare a cross-compiler for i686-elf. See [here](https://wiki.osdev.org/GCC_Cross-Compiler) if you don't know how.  
 Add to your enviroments variables
