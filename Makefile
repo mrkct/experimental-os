@@ -21,6 +21,7 @@ CSOURCES = \
 	src/kernel/devices/tty/tty.c \
 	src/kernel/kernel.c \
 	src/kernel/lib/kprintf.c \
+	src/kernel/lib/read_string.c \
 	src/kernel/memory/memory.c \
 	src/kernel/memory/kheap.c \
 	src/kernel/monitor.c \

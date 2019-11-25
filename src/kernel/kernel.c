@@ -10,6 +10,7 @@
 #include <kernel/arch/i386/x86.h>
 #include <kernel/memory/memory.h>
 #include <kernel/monitor.h>
+#include <kernel/lib/kbinput.h>
 #include <kernel/arch/multiboot.h>
 
 void kernel_setup(multiboot_info_t *mbd, unsigned int magic)
@@ -35,21 +36,27 @@ void kernel_setup(multiboot_info_t *mbd, unsigned int magic)
 
 void kernel_main(void) 
 {
-    char buffer[1024];
-    int buffer_pos = 0;
-    struct KeyAction action;
+    #define BUFFER_SIZE 1024
+    char buffer[BUFFER_SIZE];
     while (true) {
-        if (kbd_get_keyaction(&action) && action.pressed && action.character != 0) {
-            kprintf("%c", action.character);
-            if (action.character == '\n') {
-                buffer[buffer_pos] = '\0';
+        kprintf("> ");
+        switch (read_string(buffer, BUFFER_SIZE)) {
+            case -1:
+                kprintf("You can't have commands THAT long\n");
+                break;
+            /*
+                As not all modifiers are implemented in the ps2 keyboard 
+                driver the ctrl flag might contain random data. This could 
+                trigger this event if the user is unlucky while pressing 'c'. 
+                For now we comment this
+                
+            case -2:
+                kprintf("\nCTRL-C\n");
+                break;
+            */
+            default:
                 if (!monitor_handle(buffer))
                     kprintf("No commands with that name\n");
-                kprintf("> ");
-                buffer_pos = 0;
-            } else {
-                buffer[buffer_pos++] = action.character;
-            }
         }
     }
 
