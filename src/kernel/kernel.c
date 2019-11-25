@@ -10,7 +10,7 @@
 #include <kernel/arch/i386/x86.h>
 #include <kernel/memory/memory.h>
 #include <kernel/monitor.h>
-#include <kernel/lib/kbinput.h>
+#include <kernel/lib/read_string.h>
 #include <kernel/arch/multiboot.h>
 
 void kernel_setup(multiboot_info_t *mbd, unsigned int magic)
@@ -49,7 +49,7 @@ void kernel_main(void)
                 driver the ctrl flag might contain random data. This could 
                 trigger this event if the user is unlucky while pressing 'c'. 
                 For now we comment this
-                
+
             case -2:
                 kprintf("\nCTRL-C\n");
                 break;

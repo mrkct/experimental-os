@@ -3,7 +3,7 @@
 #include <stdbool.h>
 #include <kernel/devices/ps2kb/keyboard.h>
 #include <kernel/lib/kprintf.h>
-#include <kernel/lib/kbinput.h>
+#include <kernel/lib/read_string.h>
 
 
 /*
