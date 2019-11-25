@@ -8,7 +8,7 @@
 
 #define TAB_SIZE 4
 
-static void update_cursor(void);
+static void move_cursor(size_t row, size_t column);
 
 static const size_t VGA_WIDTH = 80;
 static const size_t VGA_HEIGHT = 25;
@@ -41,7 +41,6 @@ void terminal_putentryat(char c, uint8_t color, size_t x, size_t y)
 {
 	const size_t index = y * VGA_WIDTH + x;
 	terminal_buffer[index] = vga_entry(c, color);
-	update_cursor();
 }
  
 /**
@@ -66,9 +65,15 @@ void terminal_nextline(void)
 
 void terminal_putchar(char c) 
 {
-    if (c == '\n') {
+	if (c == '\b') {
+		terminal_column = terminal_column > 0 ? terminal_column - 1 : 0 ;
+		terminal_putentryat(' ', terminal_color, terminal_column, terminal_row);
+		move_cursor(terminal_row, terminal_column);
+		return;
+	} else if (c == '\n') {
         terminal_nextline();
-        return;
+		move_cursor(terminal_row, terminal_column);
+		return;
     } else if (c == '\t') {
         int spaces = VGA_WIDTH - terminal_column;
         if (spaces > TAB_SIZE)
@@ -76,16 +81,13 @@ void terminal_putchar(char c)
         for (int i = 0; i < TAB_SIZE; i++)
             terminal_putchar(' ');
         return;
-    } else if (c == '\b') {
-		terminal_column = terminal_column > 0 ? terminal_column - 1 : 0 ;
-		terminal_putentryat(' ', terminal_color, terminal_column, terminal_row);
-		return;
-	}
+    }
     
 	terminal_putentryat(c, terminal_color, terminal_column, terminal_row);
 	if (++terminal_column == VGA_WIDTH) {
 		terminal_nextline();
 	}
+	move_cursor(terminal_row, terminal_column);
 }
  
 void terminal_write(const char* data, size_t size) 
@@ -138,9 +140,9 @@ void terminal_clear(void)
 			terminal_putentryat(' ', terminal_color, i, j);
 }
 
-static void update_cursor(void)
+static void move_cursor(size_t row, size_t column)
 {
-	uint16_t pos = terminal_row * VGA_WIDTH + (terminal_column+1);
+	uint16_t pos = row * VGA_WIDTH + column;
  
 	outb(0x3D4, 0x0F);
 	outb(0x3D5, (uint8_t) (pos & 0xFF));
