@@ -32,9 +32,9 @@ source code to the CSOURCES variable.
 - External interrupt support
 - Clock & PS2 Keyboard drivers with the PIC 8259
 - Paging, even though it's only a simple identity mapping
+- Dynamic memory allocator (kernel only)
 
 ## Todo
-- Dynamic memory allocator
 - A filesystem:
     - At first a virtual one, in RAM
 - Able to load & run programs
