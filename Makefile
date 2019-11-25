@@ -22,6 +22,7 @@ CSOURCES = \
 	src/kernel/kernel.c \
 	src/kernel/lib/kprintf.c \
 	src/kernel/memory/memory.c \
+	src/kernel/memory/kheap.c \
 	src/kernel/monitor.c \
 	src/klibc/string.c \
 

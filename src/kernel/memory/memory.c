@@ -17,14 +17,21 @@ static uint32_t base_memory;
 void memory_init(multiboot_info_t *mbh, uint32_t magic)
 {
     base_memory = multiboot_read_available_memory(mbh, magic);
+    kmalloc_init(boot_alloc(KERNEL_HEAP_SIZE, PGSIZE), KERNEL_HEAP_SIZE);
+    /*
+        Calling paging init sets all the memory allocated with boot_alloc to 
+        'reserved', as such it needs to be the last thing done
+    */
     paging_init(mbh);
     paging_load(paging_kernel_pgdir());
+    
 }
 
 /*
     A simple memory allocator, to be used only to setup paging. This might 
     return more memory than asked, all memory returned is guaranteed to be 
-    aligned to blocksize. Note that memory allocated this way cannot be free'd.
+    aligned to blocksize. Note that memory allocated this way cannot be free'd..
+    If called with 0 bytes returns the current address up until memory is used
 */
 void *boot_alloc(size_t bytes, uint32_t blocksize)
 {
