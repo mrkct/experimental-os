@@ -23,7 +23,7 @@ static pde_t *kern_pgdir;
 */
 static void multiboot_detect_available_pages(multiboot_info_t *mbh)
 {
-    int reserved_pages = TODO_FREE_MEMORY_START / PGSIZE;
+    int reserved_pages = ((int) boot_alloc(0, PGSIZE)) / PGSIZE;
     for (int i = 0; i < reserved_pages; i++) {
         pages[i].reserved = true;
         pages[i].references = 0;
