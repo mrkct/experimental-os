@@ -14,7 +14,7 @@ struct Interval *interval_list;
 */
 void kmalloc_init(char *freespace, uint32_t size)
 {
-    interval_alloc(freespace, freespace+size);
+    interval_insert(freespace, freespace+size);
 }
 
 /*
