@@ -1,6 +1,8 @@
 #ifndef MODULES_H
 #define MODULES_H
 
+#include <stdint.h>
+#include <stdbool.h>
 #include <kernel/arch/multiboot.h>
 
 struct Module {
