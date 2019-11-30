@@ -36,3 +36,26 @@ char *strcpy(char *destination, const char *source)
 
     return r;
 }
+
+void *memset(void *str, int c, size_t n)
+{
+    char *from = (char *) str;
+    char *end = (char *) (from + n);
+    while (from < end) {
+        *from = (unsigned char) c;
+        from++;
+    }
+
+    return str;
+}
+
+void *memcpy(void *str1, const void *str2, size_t n)
+{
+    char *s1 = (char *) str1;
+    char *s2 = (char *) str2;
+    for (size_t i = 0; i < n; i++) {
+        s1[i] = s2[i]; 
+    }
+
+    return str1;
+}
