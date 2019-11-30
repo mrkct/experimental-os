@@ -58,7 +58,7 @@ void *interval_alloc(size_t requested, bool try_defragment)
     struct Interval *previous = NULL;
     uint32_t total_free_memory = 0;
     while (interval) {
-        int available = (int) (interval->end - interval->from);
+        size_t available = (size_t) (interval->end - interval->from);
         total_free_memory += total_free_memory;
         if (available - sizeof(struct Interval) > requested) {
             interval->end -= requested;
