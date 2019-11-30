@@ -7,3 +7,4 @@
 notes_*.md
 grub.cfg
 dump.S
+src/ramdisk/ramdisk.initrd

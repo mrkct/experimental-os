@@ -12,9 +12,11 @@ echo "
 # Any changes here will be deleted next time you 'make build-iso'
 menuentry \"$2\" {
 	multiboot /boot/$1
+	module /boot/ramdisk.initrd
 }" > grub.cfg
 
 mkdir -p isodir/boot/grub
 cp $1 isodir/boot/$1
 cp grub.cfg isodir/boot/grub/grub.cfg
+cp src/ramdisk/ramdisk.initrd isodir/boot/ramdisk.initrd
 grub-mkrescue -o "$2.iso" isodir
