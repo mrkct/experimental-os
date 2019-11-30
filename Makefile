@@ -20,6 +20,7 @@ CSOURCES = \
 	src/kernel/devices/ps2kb/keyboard.c \
 	src/kernel/devices/timer/timer.c \
 	src/kernel/devices/tty/tty.c \
+	src/kernel/devices/ramdisk/ramdisk.c \
 	src/kernel/kernel.c \
 	src/kernel/lib/kprintf.c \
 	src/kernel/lib/read_string.c \
