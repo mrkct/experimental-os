@@ -16,7 +16,8 @@ struct MonitorCommand commands[] = {
 
 int monitor_handle(char *command)
 {
-    for (int i = 0; i < sizeof(commands) / sizeof(commands[0]); i++) {
+    int commands_length = (int) (sizeof(commands) / sizeof(commands[0]));
+    for (int i = 0; i < commands_length; i++) {
         if (strcmp(commands[i].name, command) == 0) {
             commands[i].function(command);
             return 1;
@@ -29,7 +30,8 @@ int monitor_handle(char *command)
 void monitor_help(char *arguments)
 {
     kprintf("Here is a list of all availables commands:\n");
-    for (int i = 0; i < sizeof(commands) / sizeof(commands[0]); i++) {
+    int commands_length = (int) (sizeof(commands) / sizeof(commands[0]));
+    for (int i = 0; i < commands_length; i++) {
         kprintf("%s - %s\n", commands[i]);
     }
 }
