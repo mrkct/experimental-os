@@ -9,10 +9,11 @@
 /*
     This is the memory map for the OS
 
-    0        -> 1MB             : Not used, we save all the bios structures
-    1MB      -> kernel_end      : The kernel text & static data
-    kern_end -> kern_end+16MB   : Kernel heap space
-    kern_end+16MB -> 0xffffffff : Available to programs
+    [0, 1MB]: Not used, we save all the bios structures
+    [1MB, kern_end]: The kernel text & static data
+    [kern_end, end_modules]: GRUB's loaded modules
+    [end_modules, end_modules+16MB]: Kernel heap space
+    [end_modules+16MB, 0xffffffff]: Available to programs
 */
 /*
     TODO: Change this into the memory address where the kernel ends in 
@@ -28,10 +29,9 @@
 typedef uint32_t paddr_t;
 typedef uint32_t vaddr_t;
 
-
+uint32_t multiboot_read_memory(multiboot_info_t *);
+void memory_set_total(uint32_t);
 uint32_t memory_get_total(void);
-void *boot_alloc(size_t, uint32_t);
-void memory_init(multiboot_info_t*, uint32_t);
-uint32_t multiboot_read_available_memory(multiboot_info_t*, uint32_t);
+void *boot_alloc(size_t);
 
 #endif

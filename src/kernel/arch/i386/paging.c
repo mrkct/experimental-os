@@ -23,7 +23,7 @@ static pde_t *kern_pgdir;
 */
 static void multiboot_detect_available_pages(multiboot_info_t *mbh)
 {
-    int reserved_pages = ((int) boot_alloc(0, PGSIZE)) / PGSIZE;
+    int reserved_pages = ((int) boot_alloc(0)) / PGSIZE;
     for (int i = 0; i < reserved_pages; i++) {
         pages[i].reserved = true;
         pages[i].references = 0;
@@ -49,7 +49,7 @@ void paging_init(multiboot_info_t *mbh)
 {
     uint32_t total_memory = memory_get_total();
     npages = total_memory / PGSIZE;
-    pages = (struct PageInfo *) boot_alloc(sizeof(struct PageInfo) * npages, PGSIZE);
+    pages = (struct PageInfo *) boot_alloc(sizeof(struct PageInfo) * npages);
     multiboot_detect_available_pages(mbh);
     kern_pgdir = pgdir_create(true);
     pgdir_map(kern_pgdir, 0, ADDRESS_SPACE_SIZE, 0, PG_PRESENT | PG_USER);

@@ -25,6 +25,7 @@ CSOURCES = \
 	src/kernel/memory/memory.c \
 	src/kernel/memory/kheap.c \
 	src/kernel/monitor.c \
+	src/kernel/modules.c \
 	src/klibc/string.c \
 
 # ./kern/arch/i686/boot/interrupt.S is not included here because it is
