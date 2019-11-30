@@ -38,7 +38,7 @@ int load_grub_modules(multiboot_info_t *header)
         modules[i].start = m;
         modules[i].size = size;
 
-        curr_mod = curr_mod->mod_end;
+        curr_mod = (multiboot_module_t *) curr_mod->mod_end;
         loaded++;
     }
 
