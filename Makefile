@@ -1,4 +1,5 @@
-OS_NAME := "Experimental OS"	# The name that will appear in GRUB
+# The name that will appear in GRUB
+OS_NAME := Experimental OS
 
 # The '-g' adds debugging symbols
 AS_FLAGS := -g
@@ -51,7 +52,7 @@ create-sysroot: config
 build: kernel.bin
 
 build-iso: kernel.bin
-	./build-iso.sh "kernel.bin" $(OS_NAME)
+	./build-iso.sh "kernel.bin" "$(OS_NAME)"
 
 kernel.bin: create-sysroot $(OBJECT_FILES) 
 	$(CC) -T linker.ld -o kernel.bin $(patsubst %.o, $(OUTF)/%.o, $(OBJECT_FILES)) $(LD_FLAGS)
@@ -68,6 +69,9 @@ run: kernel.bin
 
 run-gdb: kernel.bin
 	qemu-system-i386 -kernel kernel.bin -d guest_errors -s -S
+
+run-iso: build-iso
+	qemu-system-i386 -cdrom "$(OS_NAME).iso"
 
 ./src/kernel/arch/i386/boot/boot.o: config
 	$(AS) src/kernel/arch/i386/boot/boot.S -o $(OUTF)/src/kernel/arch/i386/boot/boot.o $(AS_FLAGS) -I src/kernel/arch/i386/boot/
