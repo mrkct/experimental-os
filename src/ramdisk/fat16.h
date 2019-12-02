@@ -75,6 +75,7 @@ struct FAT16FileSystem {
     struct FAT16BootRecord bootRecord;
     struct FAT16ExtendedBootRecord eBootRecord;
     int tableOffset;
+    int rootDirOffset;
     int dataOffset;
 } __attribute__((packed));
 

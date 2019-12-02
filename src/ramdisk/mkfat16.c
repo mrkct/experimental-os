@@ -57,13 +57,13 @@ int fat16_read_filesystem(char *disk, FAT16FileSystem *out)
     if (signature != 0x29 && signature != 0x28) {
         return -1;
     }
-    
-    pos += sizeof(struct FAT16ExtendedBootRecord);
-    out->tableOffset = (int) (pos - disk);
-    
-    int table_size = (out->bootRecord.bytesPerSector * out->bootRecord.sectorsPerFat);
-    pos += table_size * out->bootRecord.fats;
-    out->dataOffset = (int) (pos - disk);
+
+    int sector_size = out->bootRecord.bytesPerSector;
+    struct FAT16BootRecord *br = &out->bootRecord;
+    out->tableOffset = br->reservedSectors * sector_size;
+    out->rootDirOffset = out->tableOffset;
+    out->rootDirOffset += (sector_size * br->sectorsPerFat * br->fats);
+    out->dataOffset = out->rootDirOffset + out->bootRecord.maxRootEntries * 32;
 
     return 0;
 }
