@@ -21,24 +21,24 @@ void print_s(char *s, int size)
 
 void print_boot_record(struct FAT16BootRecord *boot_record) {
     printf("OEM: "); print_s((char *) boot_record->OEM, 8);
-    printf("\nBytes per sector: %d\n", boot_record->bytes_per_sector);
-    printf("Sectors per cluster: %d\n", boot_record->sectors_per_cluster);
+    printf("\nBytes per sector: %d\n", boot_record->bytesPerSector);
+    printf("Sectors per cluster: %d\n", boot_record->sectorsPerCluster);
     printf("File Allocation Tables: %d\n", boot_record->fats);
-    printf("Directory entries: %d\n", boot_record->max_root_entries);
-    printf("Volume sectors: %d\n", boot_record->volume_sectors);
-    printf("Media descriptor type: %d\n", boot_record->media_descriptor_type);
-    printf("Sectors per FAT: %d\n", boot_record->sectors_per_fat);
-    printf("Sectors per track: %d\n", boot_record->sectors_per_track);
-    printf("Heads per storage unit: %d\n", boot_record->heads_per_storage);
-    printf("Hidden sectors: %d\n", boot_record->hidden_sectors);
-    printf("Large sector count: %d\n", boot_record->large_sector_count);
+    printf("Directory entries: %d\n", boot_record->maxRootEntries);
+    printf("Volume sectors: %d\n", boot_record->volumeSectors);
+    printf("Media descriptor type: %d\n", boot_record->mediaDescriptorType);
+    printf("Sectors per FAT: %d\n", boot_record->sectorsPerFat);
+    printf("Sectors per track: %d\n", boot_record->sectorsPerTrack);
+    printf("Heads per storage unit: %d\n", boot_record->headsPerStorage);
+    printf("Hidden sectors: %d\n", boot_record->hiddenSectors);
+    printf("Large sector count: %d\n", boot_record->largeSectorCount);
 }
 
 void print_extended_boot_record(struct FAT16ExtendedBootRecord *record) {
     printf("--- Extended Boot Record ---\n");
     printf("Drive number: %d\n", record->drive);
     printf("Signature: %x\n", record->signature);
-    printf("Volume Serial ID: %x\n", record->volume_id);
+    printf("Volume Serial ID: %x\n", record->volumeId);
     printf("Label string: "); print_s(record->label, FAT_LABEL_LENGTH);
     printf("\nSystem identifier: "); print_s(record->fstype, FAT_FSTYPE_LENGTH);
     printf("\n");
@@ -61,7 +61,7 @@ int fat16_read_filesystem(char *disk, FAT16FileSystem *out)
     pos += sizeof(struct FAT16ExtendedBootRecord);
     out->tableOffset = (int) (pos - disk);
     
-    int table_size = (out->bootRecord.bytes_per_sector * out->bootRecord.sectors_per_fat);
+    int table_size = (out->bootRecord.bytesPerSector * out->bootRecord.sectorsPerFat);
     pos += table_size * out->bootRecord.fats;
     out->dataOffset = (int) (pos - disk);
 
@@ -83,4 +83,8 @@ int main(int argc, char **args)
 
     print_boot_record(&fs.bootRecord);
     print_extended_boot_record(&fs.eBootRecord);
+
+    printf("----- Checking ------\n");
+    printf("Calculated table offset: %d\n", fs.tableOffset);
+    printf("Expected table offset: %d\n", fs.bootRecord.reservedSectors * fs.bootRecord.bytesPerSector);
 }

@@ -17,43 +17,43 @@
 struct FAT16BootRecord {
     unsigned char jmp[3];
     unsigned char OEM[FAT_OEM_LENGTH];
-    uint16_t bytes_per_sector;
-    uint8_t sectors_per_cluster;
-    uint16_t reserved_sectors;
+    uint16_t bytesPerSector;
+    uint8_t sectorsPerCluster;
+    uint16_t reservedSectors;
     uint8_t fats;
-    uint16_t max_root_entries;
-    uint16_t volume_sectors;
-    uint8_t media_descriptor_type;
-    uint16_t sectors_per_fat;
-    uint16_t sectors_per_track;
-    uint16_t heads_per_storage;
-    uint32_t hidden_sectors;
-    uint32_t large_sector_count;
+    uint16_t maxRootEntries;
+    uint16_t volumeSectors;
+    uint8_t mediaDescriptorType;
+    uint16_t sectorsPerFat;
+    uint16_t sectorsPerTrack;
+    uint16_t headsPerStorage;
+    uint32_t hiddenSectors;
+    uint32_t largeSectorCount;
 } __attribute__((packed));
 
 struct FAT16ExtendedBootRecord {
     uint8_t drive;
     uint8_t reserved;
     uint8_t signature;
-    uint32_t volume_id;
+    uint32_t volumeId;
     unsigned char label[FAT_LABEL_LENGTH];
     unsigned char fstype[FAT_FSTYPE_LENGTH];
     unsigned char bootcode[FAT_BOOTCODE_LENGTH];
-    uint16_t boot_signature; 
+    uint16_t bootSignature; 
 } __attribute__((packed));
 
 struct FAT16StandardDirectory {
     unsigned char filename[FAT_FILENAME_LENGTH];
     uint8_t attributes;
     uint8_t reserved;
-    uint8_t creation_time_sec;
-    uint16_t creation_time;
-    uint16_t creation_date;
-    uint16_t last_access_date;
-    uint16_t high_start_cluster_number;
-    uint16_t last_mod_time;
-    uint16_t last_mod_date;
-    uint16_t low_start_cluster_number;
+    uint8_t creationTimeSec;
+    uint16_t creationTime;
+    uint16_t creationDate;
+    uint16_t lastAccessDate;
+    uint16_t highStartingClusterNumber;
+    uint16_t lastModTime;
+    uint16_t lastModDate;
+    uint16_t lowStartingClusterNumber;
     uint32_t filesize;
 };
 
@@ -61,7 +61,7 @@ struct FAT16LongFileName {
     uint8_t order;
     unsigned char filename1[10];
     uint8_t attribute;
-    uint8_t entry_type;
+    uint8_t entryType;
     uint8_t checksum;
     unsigned char filename2[12];
     uint16_t zero;
