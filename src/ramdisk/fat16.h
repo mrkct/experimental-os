@@ -42,7 +42,7 @@ struct FAT16ExtendedBootRecord {
     uint16_t bootSignature; 
 } __attribute__((packed));
 
-struct FAT16StandardDirectory {
+struct FAT16DirEntry {
     unsigned char filename[FAT_FILENAME_LENGTH];
     uint8_t attributes;
     uint8_t reserved;
@@ -55,7 +55,9 @@ struct FAT16StandardDirectory {
     uint16_t lastModDate;
     uint16_t lowStartingClusterNumber;
     uint32_t filesize;
-};
+} __attribute__((packed));
+
+typedef struct FAT16DirEntry FAT16DirEntry;
 
 struct FAT16LongFileName {
     uint8_t order;
@@ -83,5 +85,6 @@ typedef struct FAT16FileSystem FAT16FileSystem;
 
 
 int fat16_read_filesystem(char *start, FAT16FileSystem *out);
+int fat16_find_entry(const char *entryname, FAT16FileSystem *fs, FAT16DirEntry *folder, FAT16DirEntry *out);
 
 #endif

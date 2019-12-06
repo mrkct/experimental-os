@@ -9,6 +9,7 @@
 
 int fat16_read_filesystem(char *start, FAT16FileSystem *out);
 
+char *ramdisk;
 
 void print_s(char*, int);
 
@@ -68,13 +69,40 @@ int fat16_read_filesystem(char *disk, FAT16FileSystem *out)
     return 0;
 }
 
+int fat16_find_entry(const char *entryname, FAT16FileSystem *fs, FAT16DirEntry *folder, FAT16DirEntry *out)
+{
+    printf("-- Printing content of %s --\n", entryname);
+    // int children = folder->filesize / sizeof(FAT16DirEntry);
+    int children = fs->bootRecord.maxRootEntries;
+    printf("The folder has %d files in it: \n", children);
+    // TODO: Convert cluster number into offset. This only works for root
+    FAT16DirEntry *entry = (FAT16DirEntry *) ramdisk;
+    int dirOffset = fs->rootDirOffset;
+    for (int i = 0; i < children; i++) {
+        entry = (FAT16DirEntry *) (ramdisk + dirOffset);
+        if (*entry->filename == 0x00 || *entry->filename == 0xe5) {
+            continue;
+        }
+        printf("Filename: "); print_s(entry->filename, 11);
+        printf("\nSize: %d\n\n", entry->filesize);
+        dirOffset += sizeof(FAT16DirEntry);
+    }
+
+    return 0;
+}
+
 int main(int argc, char **args) 
 {
-    FILE *fd = fopen("sample.fat16", "rb");
+    FILE *fd;
+    if (argc > 1) {
+        fd = fopen(args[1], "rb");
+    } else {
+        fd = fopen("sample.fat16", "rb");
+    }
     fseek(fd, 0L, SEEK_END);
     uint32_t size = ftell(fd);
     rewind(fd);
-    char *ramdisk = (char *) malloc(size);
+    ramdisk = (char *) malloc(size);
     assert(fread(ramdisk, 1, size, fd) == size);
     fclose(fd);
 
@@ -83,8 +111,7 @@ int main(int argc, char **args)
 
     print_boot_record(&fs.bootRecord);
     print_extended_boot_record(&fs.eBootRecord);
-
-    printf("----- Checking ------\n");
-    printf("Calculated table offset: %d\n", fs.tableOffset);
-    printf("Expected table offset: %d\n", fs.bootRecord.reservedSectors * fs.bootRecord.bytesPerSector);
+    
+    // print_root_directory(&fs);
+    fat16_find_entry("/", &fs, NULL, NULL);
 }
