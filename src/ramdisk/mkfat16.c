@@ -7,8 +7,6 @@
 
 #include "fat16.h"
 
-int fat16_read_filesystem(char *start, FAT16FileSystem *out);
-
 char *ramdisk;
 
 void print_s(char*, int);
@@ -18,6 +16,14 @@ void print_s(char *s, int size)
     for (int i = 0; i < size; i++) {
         printf("%c", s[i]);
     }
+}
+
+int fat16_is_entry_end(FAT16DirEntry *entry) {
+    return *((char *) entry) == 0x00;
+}
+
+int fat16_is_entry_unused(FAT16DirEntry *entry) {
+    return *((char *) entry) == 0xe5;
 }
 
 void print_boot_record(struct FAT16BootRecord *boot_record) {
@@ -69,26 +75,26 @@ int fat16_read_filesystem(char *disk, FAT16FileSystem *out)
     return 0;
 }
 
-int fat16_find_entry(const char *entryname, FAT16FileSystem *fs, FAT16DirEntry *folder, FAT16DirEntry *out)
+int fat16_listdir(FAT16FileSystem *fs, FAT16DirEntry *folder, FAT16DirEntry **out)
 {
-    printf("-- Printing content of %s --\n", entryname);
-    // int children = folder->filesize / sizeof(FAT16DirEntry);
-    int children = fs->bootRecord.maxRootEntries;
-    printf("The folder has %d files in it: \n", children);
-    // TODO: Convert cluster number into offset. This only works for root
-    FAT16DirEntry *entry = (FAT16DirEntry *) ramdisk;
-    int dirOffset = fs->rootDirOffset;
-    for (int i = 0; i < children; i++) {
-        entry = (FAT16DirEntry *) (ramdisk + dirOffset);
-        if (*entry->filename == 0x00 || *entry->filename == 0xe5) {
+    int allocated = 20;
+    int size = 0;
+    *out = malloc(allocated * sizeof(FAT16DirEntry));
+    
+    FAT16DirEntry *entry = (FAT16DirEntry *) (ramdisk + fs->rootDirOffset);
+    while ( !fat16_is_entry_end(entry) ) {
+        if ( fat16_is_entry_unused(entry) ) {
+            entry++;
             continue;
+        } else if (size == allocated) {
+            allocated *= 2;
+            *out = realloc(*out, allocated * sizeof(FAT16DirEntry));
         }
-        printf("Filename: "); print_s(entry->filename, 11);
-        printf("\nSize: %d\n\n", entry->filesize);
-        dirOffset += sizeof(FAT16DirEntry);
+        (*out)[size++] = *entry;
+        entry++;
     }
 
-    return 0;
+    return size;
 }
 
 int main(int argc, char **args) 
@@ -112,6 +118,11 @@ int main(int argc, char **args)
     print_boot_record(&fs.bootRecord);
     print_extended_boot_record(&fs.eBootRecord);
     
-    // print_root_directory(&fs);
-    fat16_find_entry("/", &fs, NULL, NULL);
+    FAT16DirEntry *content;
+    int content_size = fat16_listdir(&fs, NULL, &content);
+    printf("--- There are %d entries in root ---\n", content_size);
+    for (int i = 0; i < content_size; i++) {
+        printf("Filename: "); print_s(content[i].filename, 11);
+        printf("\nFilesize: %d\n\n", content[i].filesize);
+    }
 }

@@ -14,6 +14,10 @@
 #define FAT_BOOTCODE_LENGTH 448
 #define FAT_FILENAME_LENGTH 11
 
+/*
+    These are data structures saved on disk
+*/
+
 struct FAT16BootRecord {
     unsigned char jmp[3];
     unsigned char OEM[FAT_OEM_LENGTH];
@@ -72,6 +76,10 @@ struct FAT16LongFileName {
 
 typedef uint16_t FATEntry;
 
+/*
+    These are NOT actual structures on disk
+*/
+
 struct FAT16FileSystem {
     char *ramdisk;
     struct FAT16BootRecord bootRecord;
@@ -83,8 +91,10 @@ struct FAT16FileSystem {
 
 typedef struct FAT16FileSystem FAT16FileSystem;
 
-
 int fat16_read_filesystem(char *start, FAT16FileSystem *out);
 int fat16_find_entry(const char *entryname, FAT16FileSystem *fs, FAT16DirEntry *folder, FAT16DirEntry *out);
+
+int fat16_is_entry_end(FAT16DirEntry *);
+int fat16_is_entry_unused(FAT16DirEntry *);
 
 #endif
