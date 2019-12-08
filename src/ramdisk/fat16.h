@@ -8,11 +8,20 @@
 #include <stdbool.h>
 #include <string.h>
 
+
 #define FAT_OEM_LENGTH 8
 #define FAT_LABEL_LENGTH 11
 #define FAT_FSTYPE_LENGTH 8
 #define FAT_BOOTCODE_LENGTH 448
 #define FAT_FILENAME_LENGTH 11
+
+#define FAT_ATTR_READONLY   0x01
+#define FAT_ATTR_HIDDEN     0x02
+#define FAT_ATTR_SYSTEM     0x04
+#define FAT_ATTR_VOLUMEID   0x08
+#define FAT_ATTR_DIRECTORY  0x10
+#define FAT_ATTR_ARCHIVE    0x20
+#define FAT_ATTR_LFN        0x0F
 
 /*
     These are data structures saved on disk
@@ -91,10 +100,32 @@ struct FAT16FileSystem {
 
 typedef struct FAT16FileSystem FAT16FileSystem;
 
+/*
+    Represents the status of a file that is being read
+*/
+struct FAT16FileHandle {
+    // The cluster at which the file content starts. Used for rewinding
+    int initialCluster;
+    // The position in the file
+    int position;
+    // The current cluster where position is in
+    int cluster;
+    // The size(bytes) of the file. Used to avoid reading outside the file data
+    int filesize;
+};
+
+typedef struct FAT16FileHandle FAT16FileHandle;
+
+
 int fat16_read_filesystem(char *start, FAT16FileSystem *out);
-int fat16_find_entry(const char *entryname, FAT16FileSystem *fs, FAT16DirEntry *folder, FAT16DirEntry *out);
+int fat16_ls(int *offset, FAT16DirEntry *out);
+int fat16_fread(struct FAT16FileHandle *handle, int count, char *buffer);
 
 int fat16_is_entry_end(FAT16DirEntry *);
 int fat16_is_entry_unused(FAT16DirEntry *);
+// TODO: This is not ok, we won't be able to use char* when we move to disk
+char *fat16_find_cluster(int cluster);  
+int fat16_get_next_cluster(int cluster);
+int fat16_cluster_to_offset(int cluster);
 
 #endif
