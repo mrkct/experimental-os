@@ -22,7 +22,7 @@ int fat16_is_entry_unused(FAT16DirEntry *entry) {
 }
 
 int fat16_cluster_to_offset(int cluster) {
-    return cluster * CLUSTER_SIZE;
+    return (cluster-2) * CLUSTER_SIZE;
 }
 
 char *fat16_find_cluster(int cluster) {
@@ -97,24 +97,68 @@ int fat16_ls(int *offset, FAT16DirEntry *out)
 
 /*
     Finds the entry with the given name and returns it in the 'out' argument. 
-    @param name: The name of the entry to search for. Only the first 8 
-    characters will be used for the comparison, also they need to be upper case
-    TODO: Change these limitations
+    @param name: The name of the entry to search for. Only up to 11 characters 
+    will be used for the comparison (this is due to limitations of FAT16)
     @param diroffset: The offset in the disk of the directory in which to find 
     the entry
     @param out: Where, if an entry is found, the entry will be stored
-    Returns 0 if an entry with the given name was found, -1 otherwise.
+    Returns the disk offset of the entry if found (>0), -1 otherwise
 */
-int fat16_findentry(const char *name, int diroffset, FAT16DirEntry *out) {
+int fat16_findentry(char *name, int diroffset) {
     FAT16DirEntry entry;
     while(fat16_ls(&diroffset, &entry)) {
-        if (strncmp(entry.filename, name, 8) == 0) {
-            *out = entry;
-            return 0;
+        if (fat16_filenamecmp(entry.filename, name) == 0) {
+            return diroffset - sizeof(FAT16DirEntry);
         }
     }
 
     return -1;
+}
+
+/*
+    See `fat16_opendir`, this is the implementation of that function.
+    @param path: Absolute path, starting with '/', to the entry
+    @param length: Length of the path string
+    @returns disk offset on success, -1 if it wasnt able to follow the 
+    path(missing directory, for example)
+*/
+static int fat16_open_support(const char *path, int length) {
+    if (length <= 1){
+        return fs.rootDirOffset;
+    }
+
+    int last_slash = length - 1;
+    while (last_slash > 0 && path[last_slash] != '/') {
+        last_slash--;
+    }
+
+    int diroff = fat16_open_support(path, last_slash);
+    // Directory was not found
+    if (diroff < 0)     return -1;
+    char dirname[12];
+    int dirname_length = length - (last_slash+1);
+    memcpy(dirname, &path[last_slash+1], dirname_length);
+    dirname[dirname_length] = '\0';
+
+    int entry_off = fat16_findentry(dirname, diroff);
+    if (entry_off < 0) {
+        return -1;
+    }
+    FAT16DirEntry *e = (FAT16DirEntry *) (ramdisk + entry_off);
+    return fs.dataOffset + fat16_cluster_to_offset(e->lowStartingClusterNumber);
+}
+
+/*
+    Returns the disk offset of the entry in an absolute path. This function 
+    does no checks if the path is syntactically correct, you need to respect 
+    the format. In particular: 
+    - The path needs to start with '/'
+    - It should NOT end with '/'
+    Returns the offset of the entry in the disk or -1 if the path couldn't be 
+    followed
+*/
+int fat16_open(const char *path) {
+    return fat16_open_support(path, strlen(path));
 }
 
 /*

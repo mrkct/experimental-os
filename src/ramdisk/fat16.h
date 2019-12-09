@@ -120,6 +120,7 @@ typedef struct FAT16FileHandle FAT16FileHandle;
 int fat16_read_filesystem(char *start, FAT16FileSystem *out);
 int fat16_ls(int *offset, FAT16DirEntry *out);
 int fat16_fread(struct FAT16FileHandle *handle, int count, char *buffer);
+int fat16_open(const char *path);
 
 int fat16_is_entry_end(FAT16DirEntry *);
 int fat16_is_entry_unused(FAT16DirEntry *);
