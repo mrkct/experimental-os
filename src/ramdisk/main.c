@@ -68,24 +68,39 @@ int main(int argc, char **args)
     print_boot_record(&fs.bootRecord);
     print_extended_boot_record(&fs.eBootRecord);
     
-    printf("--- Content of / ---\n");
-    list_dir(fs.rootDirOffset);
-    printf("---\n");
+    char pathname[1000];
+    int dir;
+    while (true) {
+        printf("Write 0 to list a directory, 1 to view a file: ");
+        scanf("%d", &dir);
+        printf("Write the pathname: ");
+        scanf("%s", pathname);
+        if (dir == 0) {
+            int off = fat16_open(pathname, NULL);
+            printf("--- Listing directory at offset (%s) %d ---\n", pathname, off);
+            list_dir(off);
+        } else {
+            struct FAT16FileHandle handle = {0};
+            if (fat16_fopen(pathname, 'r', &handle) < 0) {
+                printf("could not open file.\n");
+                continue;
+            }
+            
+            printf("File handle: cluster = %d  filesize = %d  position = %d\n", handle.cluster, handle.filesize, handle.position);
 
-    FAT16DirEntry e;
-    int offset = fs.rootDirOffset;
-    while (fat16_ls(&offset, &e) && strncmp(e.filename, "L33T", 4)) {}
-    
-    struct FAT16FileHandle handle;
-    handle.cluster = e.lowStartingClusterNumber;
-    handle.position = 0;
-    handle.filesize = 14;
-    handle.initialCluster = e.lowStartingClusterNumber;
-    char buffer[1000];
-    fat16_fread(&handle, 10, buffer);
-    printf("Ho letto 10 byte: "); print_s(buffer, 10);
-    fat16_fread(&handle, 4, buffer);
-    print_s(buffer, 4);
-    
+            #define BUFF_SIZE 32
+            char buffer[BUFF_SIZE];
+            int read;
+            int total = 0;
+            
+            while (read = fat16_fread(&handle, BUFF_SIZE-1, buffer) ) {
+                buffer[read] = '\0';
+                printf("%s", buffer);
+                total += read;
+            }
+            printf("Read: %d\tExpected: %d\t(Eq: %d)\n", total, handle.filesize, total == handle.filesize);
+        }
+    }
+
     return 0;
 }
