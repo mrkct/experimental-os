@@ -116,13 +116,13 @@ int fat16_findentry(char *name, int diroffset) {
 }
 
 /*
-    See `fat16_opendir`, this is the implementation of that function.
+    See `fat16_open`, this is the implementation of that function.
     @param path: Absolute path, starting with '/', to the entry
     @param length: Length of the path string
     @returns disk offset on success, -1 if it wasnt able to follow the 
     path(missing directory, for example)
 */
-static int fat16_open_support(const char *path, int length) {
+int fat16_open_support(const char *path, int length, FAT16DirEntry *entry) {
     if (length <= 1){
         return fs.rootDirOffset;
     }
@@ -132,7 +132,7 @@ static int fat16_open_support(const char *path, int length) {
         last_slash--;
     }
 
-    int diroff = fat16_open_support(path, last_slash);
+    int diroff = fat16_open_support(path, last_slash, entry);
     // Directory was not found
     if (diroff < 0)     return -1;
     char dirname[12];
@@ -145,20 +145,51 @@ static int fat16_open_support(const char *path, int length) {
         return -1;
     }
     FAT16DirEntry *e = (FAT16DirEntry *) (ramdisk + entry_off);
+    if (entry != NULL) { *entry = *e; }
+
     return fs.dataOffset + fat16_cluster_to_offset(e->lowStartingClusterNumber);
 }
 
 /*
-    Returns the disk offset of the entry in an absolute path. This function 
-    does no checks if the path is syntactically correct, you need to respect 
-    the format. In particular: 
+    Returns the disk offset of the content of the entry in an absolute path. 
+    This function does no checks if the path is syntactically correct, you 
+    need to respect the format. In particular: 
     - The path needs to start with '/'
     - It should NOT end with '/'
-    Returns the offset of the entry in the disk or -1 if the path couldn't be 
-    followed
+    This also returns the entry in the parent directory if the 'entry' 
+    argument is not NULL. This will return nothing if you request the root, as 
+    it doesn't have a parent.
+    
+    NOTE: This is the CONTENT OF THE ENTRY, not the entry itself. If you pass a
+    path to a directory you will get the offset of the first entry in the 
+    folder. If you pass a path to a file you will get the offset of the first 
+    cluster of the file. If you want the entry in the folder see the 'entry' 
+    argument.
+
+    Returns the offset of the content of entry in the disk or -1 if the path couldn't be 
+    followed.
 */
-int fat16_open(const char *path) {
-    return fat16_open_support(path, strlen(path));
+int fat16_open(const char *path, FAT16DirEntry *entry) {
+    return fat16_open_support(path, strlen(path), entry);
+}
+
+/*
+    Opens a file given an absolute pathname. 
+    TODO: This only works for reading, implement write & append
+    Returns 0 on success, -1 if the file could not be opened
+*/
+int fat16_fopen(const char *path, char mode, struct FAT16FileHandle *handle) {
+    FAT16DirEntry entry;
+    int file_off = fat16_open(path, &entry);
+    if (file_off <= 0)
+        return -1;
+
+    handle->position = 0;
+    handle->cluster = entry.lowStartingClusterNumber;
+    handle->initialCluster = entry.lowStartingClusterNumber;
+    handle->filesize = entry.filesize;
+
+    return 0;
 }
 
 /*

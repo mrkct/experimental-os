@@ -116,14 +116,16 @@ struct FAT16FileHandle {
 
 typedef struct FAT16FileHandle FAT16FileHandle;
 
+int fat16_open_support(const char *path, int length, FAT16DirEntry *entry);
 
 int fat16_read_filesystem(char *start, FAT16FileSystem *out);
 int fat16_ls(int *offset, FAT16DirEntry *out);
+int fat16_open(const char *path, FAT16DirEntry *entry);
+int fat16_fopen(const char *path, char mode, struct FAT16FileHandle *handle);
 int fat16_fread(struct FAT16FileHandle *handle, int count, char *buffer);
-int fat16_open(const char *path);
 
-int fat16_is_entry_end(FAT16DirEntry *);
-int fat16_is_entry_unused(FAT16DirEntry *);
+int fat16_is_entry_end(FAT16DirEntry *entry);
+int fat16_is_entry_unused(FAT16DirEntry *entry);
 // TODO: This is not ok, we won't be able to use char* when we move to disk
 char *fat16_find_cluster(int cluster);  
 int fat16_get_next_cluster(int cluster);

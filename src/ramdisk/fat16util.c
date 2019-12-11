@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <ctype.h>
+#include <string.h>
 #include "fat16.h"
 #include "fat16util.h"
 
@@ -23,7 +24,7 @@ int fat16_filenamecmp(char *a, char *b) {
     int i = 0;
     int j = 0;
     while (i < FAT_FILENAME_LENGTH) {
-        if (a[i] != ' ') {
+        if (a[i] != ' ' && a[i] != '.') {
             buffer1[j++] = toupper(a[i]);
         }
         i++;
@@ -33,7 +34,7 @@ int fat16_filenamecmp(char *a, char *b) {
     i = 0;
     j = 0;
     while (i < FAT_FILENAME_LENGTH) {
-        if (b[i] != ' ') {
+        if (b[i] != ' ' && b[i] != '.') {
             buffer2[j++] = toupper(b[i]);
         }
         i++;
