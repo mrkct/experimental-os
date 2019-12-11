@@ -1,5 +1,5 @@
-#ifndef VFS_H
-#define VFS_H
+#ifndef VDISK_H
+#define VDISK_H
 
 struct DiskInterface{
     int (*read_bytes)(int, int, char *);
