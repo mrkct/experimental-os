@@ -5,13 +5,14 @@
 struct MonitorCommand {
     const char *name;
     const char *description;
-    void (*function)(char* argument);
+    int (*function)(int argc, char** argv);
 };
 
 int monitor_handle(char *);
 
-void monitor_help(char *);
-void monitor_ticks(char *);
-void monitor_system(char *);
+int monitor_help(int, char **);
+int monitor_ticks(int, char **);
+int monitor_system(int, char **);
+int monitor_echo(int, char **);
 
 #endif
