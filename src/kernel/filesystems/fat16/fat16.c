@@ -270,14 +270,14 @@ int fat16_fread(struct FAT16FileHandle *handle, int count, char *buffer) {
     
     int cluster_index = handle->cluster;
     char cluster[CLUSTER_SIZE];
-    kassert(CLUSTER_SIZE == fat16_read_cluster(handle->cluster, cluster));
+    kassert(0 == fat16_read_cluster(handle->cluster, cluster));
 
     while (copied < count && position < handle->filesize) {
         buffer[i++] = cluster[position++ % CLUSTER_SIZE];
         copied++;
         if (position % CLUSTER_SIZE == 0) {
             cluster_index = fat16_get_next_cluster(cluster_index);
-            kassert(CLUSTER_SIZE == fat16_read_cluster(cluster_index, cluster));
+            kassert(0 == fat16_read_cluster(cluster_index, cluster));
         }
     }
     handle->position = position;
