@@ -14,7 +14,8 @@ struct MonitorCommand commands[] = {
     {"help", "Displays all available commands with their descriptions", monitor_help},
     {"ticks", "Displays how many CPU ticks have occurred since boot", monitor_ticks},
     {"system", "Displays various info about the system", monitor_system},
-    {"echo", "Writes all the argument again", monitor_echo}
+    {"echo", "Writes all the argument again", monitor_echo},
+    {"ls", "Lists the content of a directory", monitor_ls}
 };
 
 /*
@@ -96,6 +97,34 @@ int monitor_echo(int argc, char **args)
         kprintf("%s ", args[i]);
     }
     kprintf("\n");
+
+    return 0;
+}
+
+#include <kernel/filesystems/fat16/fat16.h>
+
+int monitor_ls(int argc, char **args)
+{
+    FAT16DirEntry entry;
+    int offset;
+    if (argc == 1) {
+        offset = fat16_open("/", NULL);
+    } else {
+        offset = fat16_open(args[1], NULL);
+    }
+    if (offset < 0) {
+        kprintf("could not open folder\n");
+        return -1;
+    }
+    char filename[12];
+    while (fat16_ls(&offset, &entry)) {
+        memcpy(filename, entry.filename, 11);
+        filename[11] = '\0';
+        if (entry.filesize == 0) {
+            kprintf("/");
+        }
+        kprintf("%s\n", filename);
+    }
 
     return 0;
 }

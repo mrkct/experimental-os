@@ -14,5 +14,6 @@ int monitor_help(int, char **);
 int monitor_ticks(int, char **);
 int monitor_system(int, char **);
 int monitor_echo(int, char **);
+int monitor_ls(int, char **);
 
 #endif
