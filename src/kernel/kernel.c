@@ -15,7 +15,13 @@
 #include <kernel/arch/multiboot.h>
 #include <kernel/monitor.h>
 #include <kernel/modules.h>
+#include <kernel/devices/vdisk.h>
+#include <kernel/devices/ramdisk/ramdisk.h>
+#include <kernel/filesystems/fat16/fat16.h>
+#include <klibc/string.h>
 
+
+struct DiskInterface ramdisk_interface;
 
 void kernel_setup(multiboot_info_t *header, unsigned int magic)
 {
@@ -36,6 +42,11 @@ void kernel_setup(multiboot_info_t *header, unsigned int magic)
     
     paging_init(header);
     paging_load(paging_kernel_pgdir());
+
+    struct Module *modRamdisk = get_module(0);
+    kassert(0 == ramdisk_init(modRamdisk->start, modRamdisk->size));
+    kassert(0 == ramdisk_get_diskinterface(&ramdisk_interface));
+    kassert(0 == fat16_read_filesystem(&ramdisk_interface));
 }
 
 void kernel_main(void) 
