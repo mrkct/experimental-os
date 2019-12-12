@@ -21,6 +21,7 @@ CSOURCES = \
 	src/kernel/devices/timer/timer.c \
 	src/kernel/devices/tty/tty.c \
 	src/kernel/devices/ramdisk/ramdisk.c \
+	src/kernel/filesystems/fat16/fat16.c \
 	src/kernel/kernel.c \
 	src/kernel/lib/kprintf.c \
 	src/kernel/lib/read_string.c \
@@ -29,6 +30,7 @@ CSOURCES = \
 	src/kernel/monitor.c \
 	src/kernel/modules.c \
 	src/klibc/string.c \
+	src/klibc/ctype.c \
 
 # ./kern/arch/i686/boot/interrupt.S is not included here because it is
 # included directly in the file by boot.S .

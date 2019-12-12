@@ -1,63 +1,124 @@
-#include <stdio.h>
-#include <stdlib.h>
 #include <stdint.h>
-#include <assert.h>
 #include <stdbool.h>
-#include <string.h>
+#include <stddef.h>
+#include <kernel/devices/vdisk.h>
+#include <kernel/lib/kassert.h>
+#include <klibc/string.h>
+#include <klibc/ctype.h>
+#include <kernel/filesystems/fat16/fat16.h>
 
-#include "fat16.h"
-#include "fat16util.h"
 
-char *ramdisk;
 
-FAT16FileSystem fs;
-int CLUSTER_SIZE;
+static FAT16FileSystem fs;
+static struct DiskInterface *disk;
+static int CLUSTER_SIZE;
+
+void fat16_set_diskinterface(struct DiskInterface *diskinterface)
+{
+    disk = diskinterface;
+}
 
 int fat16_is_entry_end(FAT16DirEntry *entry) {
     return *((char *) entry) == 0x00;
 }
 
 int fat16_is_entry_unused(FAT16DirEntry *entry) {
-    return *((char *) entry) == 0xe5;
+    return *((unsigned char *) entry) == 0xe5;
 }
 
+/*
+    Returns the offset in bytes in the data region of the disk of the given 
+    cluster
+*/
 int fat16_cluster_to_offset(int cluster) {
     return (cluster-2) * CLUSTER_SIZE;
 }
 
-char *fat16_find_cluster(int cluster) {
-    return (char *) (ramdisk + fs.dataOffset + CLUSTER_SIZE * (cluster - 2));
+/*
+    Reads the given cluster from disk and stores it in buffer. 'buffer' is 
+    expected to be at least CLUSTER_SIZE bytes long
+    Returns the result of read_bytes
+*/
+int fat16_read_cluster(int cluster, char *buffer)
+{
+    int offset = fat16_cluster_to_offset(cluster);
+    return disk->read_bytes(fs.dataOffset + offset, CLUSTER_SIZE, buffer);
 }
 
 int fat16_get_next_cluster(int cluster) {
-    uint16_t *fat = (uint16_t *) (ramdisk + fs.tableOffset);
-    return fat[cluster];
+    return fs.fat[cluster];
 }
 
-int fat16_read_filesystem(char *disk, FAT16FileSystem *out)
+int fat16_filenamecmp(char *a, char *b) {
+    char buffer1[FAT_FILENAME_LENGTH+1];
+    char buffer2[FAT_FILENAME_LENGTH+1];
+    
+    int i = 0;
+    int j = 0;
+    while (i < FAT_FILENAME_LENGTH) {
+        if (a[i] != ' ' && a[i] != '.') {
+            buffer1[j++] = toupper(a[i]);
+        }
+        i++;
+    }
+    buffer1[j] = '\0';
+
+    i = 0;
+    j = 0;
+    while (i < FAT_FILENAME_LENGTH) {
+        if (b[i] != ' ' && b[i] != '.') {
+            buffer2[j++] = toupper(b[i]);
+        }
+        i++;
+    }
+    buffer2[j] = '\0';
+    
+    return strcmp(buffer1, buffer2);
+}
+
+/*
+    Initializes a FAT16FileSystem struct from a disk.
+    Returns 0 on success, -1 if the disk is not a valid FAT16 disk.
+*/
+int fat16_read_filesystem(struct DiskInterface *diskinterface)
 {
-    char *pos = disk;
+    size_t br_size = sizeof(struct FAT16BootRecord);
+    size_t ebr_size = sizeof(struct FAT16ExtendedBootRecord);
+    disk = diskinterface;
+    disk->read_bytes(0, br_size, (char *) &fs.bootRecord);
+    disk->read_bytes(br_size, ebr_size, (char *) &fs.eBootRecord);
     
-    memcpy(&out->bootRecord, pos, sizeof(struct FAT16BootRecord));
-    
-    pos += sizeof(struct FAT16BootRecord);
-    memcpy(&out->eBootRecord, pos, sizeof(struct FAT16ExtendedBootRecord));
-    
-    int signature = out->eBootRecord.signature;
+    int signature = fs.eBootRecord.signature;
     if (signature != 0x29 && signature != 0x28) {
         return -1;
     }
 
-    int sector_size = out->bootRecord.bytesPerSector;
-    struct FAT16BootRecord *br = &out->bootRecord;
-    out->tableOffset = br->reservedSectors * sector_size;
-    out->rootDirOffset = out->tableOffset;
-    out->rootDirOffset += (sector_size * br->sectorsPerFat * br->fats);
-    out->dataOffset = out->rootDirOffset + out->bootRecord.maxRootEntries * sizeof(FAT16DirEntry);
+    // Checks for the file system
+    int bytesPerSector = fs.bootRecord.bytesPerSector;
+    if (bytesPerSector != 512 && bytesPerSector != 1024 && bytesPerSector != 2048 && bytesPerSector != 4096) {
+        return -1;
+    }
+    // TODO: Implement the other checks
+    // see: http://read.pudn.com/downloads77/ebook/294884/FAT32%20Spec%20%28SDA%20Contribution%29.pdf
 
-    CLUSTER_SIZE = out->bootRecord.sectorsPerCluster * out->bootRecord.bytesPerSector;
+    int sector_size = fs.bootRecord.bytesPerSector;
+    struct FAT16BootRecord *br = &fs.bootRecord;
+    fs.tableOffset = br->reservedSectors * sector_size;
+    fs.rootDirOffset = fs.tableOffset;
+    fs.rootDirOffset += (sector_size * br->sectorsPerFat * br->fats);
+    fs.dataOffset = fs.rootDirOffset + fs.bootRecord.maxRootEntries * sizeof(FAT16DirEntry);
+
+    CLUSTER_SIZE = fs.bootRecord.sectorsPerCluster * fs.bootRecord.bytesPerSector;
 
     return 0;
+}
+
+void DEBUG_printentrybytes(FAT16DirEntry *e)
+{
+    char *p = (char *) e;
+    for (int i = 0; i < sizeof(FAT16DirEntry); i++)
+        kprintf("%c", *(p+i));
+    kprintf("\n");
 }
 
 /*
@@ -80,17 +141,18 @@ int fat16_read_filesystem(char *disk, FAT16FileSystem *out)
 */
 int fat16_ls(int *offset, FAT16DirEntry *out)
 {
-    FAT16DirEntry *entry = (FAT16DirEntry *) (ramdisk + *offset);
-    while (fat16_is_entry_unused(entry) && !fat16_is_entry_end(entry)) {
+    FAT16DirEntry entry;
+    kassert(0 == disk->read_bytes(*offset, sizeof(FAT16DirEntry), (char *) &entry));
+    while (fat16_is_entry_unused(&entry) && !fat16_is_entry_end(&entry)) {
         *offset += sizeof(FAT16DirEntry);
-        entry++;
+        kassert(0 == disk->read_bytes(*offset, sizeof(FAT16DirEntry), (char *) &entry));
     }
 
-    if (fat16_is_entry_end(entry)) {
+    if (fat16_is_entry_end(&entry)) {
         return 0;
     } else {
         *offset += sizeof(FAT16DirEntry);
-        *out = *entry;
+        *out = entry;
         return 1;
     }
 }
@@ -144,10 +206,11 @@ int fat16_open_support(const char *path, int length, FAT16DirEntry *entry) {
     if (entry_off < 0) {
         return -1;
     }
-    FAT16DirEntry *e = (FAT16DirEntry *) (ramdisk + entry_off);
-    if (entry != NULL) { *entry = *e; }
+    FAT16DirEntry e;
+    kassert(sizeof(FAT16DirEntry) == disk->read_bytes(entry_off, sizeof(FAT16DirEntry), (char *) &e));
+    if (entry != NULL) { *entry = e; }
 
-    return fs.dataOffset + fat16_cluster_to_offset(e->lowStartingClusterNumber);
+    return fs.dataOffset + fat16_cluster_to_offset(e.lowStartingClusterNumber);
 }
 
 /*
@@ -179,6 +242,9 @@ int fat16_open(const char *path, FAT16DirEntry *entry) {
     Returns 0 on success, -1 if the file could not be opened
 */
 int fat16_fopen(const char *path, char mode, struct FAT16FileHandle *handle) {
+    // TODO: Implement other modes
+    kassert(mode == 'r');
+
     FAT16DirEntry entry;
     int file_off = fat16_open(path, &entry);
     if (file_off <= 0)
@@ -203,14 +269,15 @@ int fat16_fread(struct FAT16FileHandle *handle, int count, char *buffer) {
     int position = handle->position;
     
     int cluster_index = handle->cluster;
-    char *cluster = fat16_find_cluster(handle->cluster);
-    
+    char cluster[CLUSTER_SIZE];
+    kassert(CLUSTER_SIZE == fat16_read_cluster(handle->cluster, cluster));
+
     while (copied < count && position < handle->filesize) {
         buffer[i++] = cluster[position++ % CLUSTER_SIZE];
         copied++;
         if (position % CLUSTER_SIZE == 0) {
             cluster_index = fat16_get_next_cluster(cluster_index);
-            cluster = fat16_find_cluster(cluster_index);
+            kassert(CLUSTER_SIZE == fat16_read_cluster(cluster_index, cluster));
         }
     }
     handle->position = position;
