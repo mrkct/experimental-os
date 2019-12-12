@@ -207,7 +207,7 @@ int fat16_open_support(const char *path, int length, FAT16DirEntry *entry) {
         return -1;
     }
     FAT16DirEntry e;
-    kassert(sizeof(FAT16DirEntry) == disk->read_bytes(entry_off, sizeof(FAT16DirEntry), (char *) &e));
+    kassert(0 == disk->read_bytes(entry_off, sizeof(FAT16DirEntry), (char *) &e));
     if (entry != NULL) { *entry = e; }
 
     return fs.dataOffset + fat16_cluster_to_offset(e.lowStartingClusterNumber);
