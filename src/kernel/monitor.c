@@ -143,21 +143,23 @@ int monitor_ls(int argc, char **args)
 
 int monitor_cat(int argc, char **args)
 {
-    struct FAT16FileHandle handle;
-    if (fat16_fopen(args[1], 'r', &handle)) {
-        kprintf("could not open file\n");
-        return -1;
-    }
-
     const int buffsize = 64;
     char buffer[buffsize];
-    
-    int read;
-    while (read = fat16_fread(&handle, buffsize-1, buffer)) {
-        buffer[read] = '\0';
-        kprintf("%s", buffer);
-    }
-    kprintf("\n");
 
+    struct FAT16FileHandle handle;
+    int read;
+
+    for (int i = 1; i < argc; i++) {
+        if (fat16_fopen(args[i], 'r', &handle)) {
+            kprintf("could not open %s\n", args[i]);
+            continue;
+        }
+        while (read = fat16_fread(&handle, buffsize-1, buffer)) {
+            buffer[read] = '\0';
+            kprintf("%s", buffer);
+        }
+        kprintf("\n");
+    }
+    
     return 0;
 }
