@@ -1,3 +1,4 @@
+#include <cpuid.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -6,6 +7,7 @@
 #include <kernel/memory/memory.h>
 #include <kernel/monitor.h>
 #include <klibc/string.h>
+
 
 // TODO: Avoid fixed max size arguments
 #define MAX_ARGS 25
@@ -88,6 +90,15 @@ int monitor_ticks(int argc, char **arguments)
 
 int monitor_system(int argc, char **arguments)
 {
+    uint32_t eax, ebx, ecx, edx;
+    __get_cpuid(0, &eax, &ebx, &ecx, &edx);
+    char cpuvendor[13];
+    uint32_t *c = (uint32_t *) cpuvendor;
+    c[0] = ebx;
+    c[1] = edx;
+    c[2] = ecx;
+    cpuvendor[12] = '\0';
+    kprintf("CPU Vendor: %s\n", cpuvendor);
     kprintf("Detected memory: %d MB\n", memory_get_total() / 1024 / 1024);
     return 0;
 }
