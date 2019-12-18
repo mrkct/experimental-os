@@ -12,16 +12,20 @@
 static struct VFSInterface vfsinterface;
 
 
-
 struct VFSInterface *fat16_get_vfsinterface(struct DiskInterface *diskinterface)
 {
     if (vfsinterface.fopen == 0) {
         int result = fat16_read_filesystem(diskinterface);
         if (result < 0) return NULL;
-        vfsinterface.fopen = &fat16vfs_fopen;
-        vfsinterface.fread = &fat16vfs_fread;
-        vfsinterface.fwrite = &fat16vfs_fwrite;
-        vfsinterface.fclose = &fat16vfs_fclose;
+        vfsinterface = (struct VFSInterface) {
+            .fopen = &fat16vfs_fopen,
+            .fread = &fat16vfs_fread,
+            .fwrite = &fat16vfs_fwrite,
+            .fclose = &fat16vfs_fclose,
+            .opendir = &fat16vfs_opendir,
+            .listdir = &fat16vfs_listdir,
+            .closedir = &fat16vfs_closedir
+        };
     }
 
     return &vfsinterface;
@@ -75,5 +79,61 @@ int fat16vfs_fwrite(char *buffer, int count, File *file)
 int fat16vfs_fclose(File *file)
 {
     kfree(file->fs_defined);
+    return 0;
+}
+
+int fat16vfs_opendir(char *path, Dir *out)
+{
+    FAT16DirEntry folder;
+    int offset = fat16_open(path, &folder);
+    if (offset < 0)
+        return -1;
+    out->fs_defined = (void *) offset;
+    // TODO: Insert the dir name in out->name
+
+    return 0;
+}
+
+int fat16vfs_listdir(Dir *dir, DirEntry *entry)
+{
+    int offset = (int) dir->fs_defined;
+    FAT16DirEntry fatentry;
+    int result = fat16_ls(&offset, &fatentry);
+    if (result == 0)
+        return 0;
+    // TODO: Convert the fat16 filenames to normal ones
+    // (remove the unnecessary spaces + add '.' to extension)
+    memcpy(entry->name, fatentry.filename, 11);
+    entry->name[12] = '\0';
+    if (fatentry.attributes & FAT_ATTR_DIRECTORY) {
+        entry->type = DIRECTORY;
+    } else {
+        entry->type = FILE;
+    }
+    entry->creation = (struct DateTime) {
+        .hour = FAT16_GET_HOURS(fatentry.creationTime),
+        .minute = FAT16_GET_MINUTES(fatentry.creationTime),
+        .second = FAT16_GET_SECONDS(fatentry.creationTime),
+        .year = FAT16_GET_YEAR(fatentry.creationDate),
+        .month = FAT16_GET_MONTH(fatentry.creationDate),
+        .day = FAT16_GET_DAY(fatentry.creationDate)
+    };
+    entry->lastUpdate = (struct DateTime) {
+        .hour = FAT16_GET_HOURS(fatentry.lastModTime),
+        .minute = FAT16_GET_MINUTES(fatentry.lastModTime),
+        .second = FAT16_GET_SECONDS(fatentry.lastModTime),
+        .year = FAT16_GET_YEAR(fatentry.lastModDate),
+        .month = FAT16_GET_MONTH(fatentry.lastModDate),
+        .day = FAT16_GET_DAY(fatentry.lastModDate)
+    };
+    dir->fs_defined = (void *) offset;
+
+    return 1;
+}
+
+int fat16vfs_closedir(Dir *dir)
+{
+    // We don't do anything, we use fs_defined for a single int stored
+    // in the pointer itself 
     return 0;
 }

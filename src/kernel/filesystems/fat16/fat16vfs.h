@@ -10,4 +10,8 @@ int fat16vfs_fread(char *buffer, int count, File *file);
 int fat16vfs_fwrite(char *buffer, int count, File *file);
 int fat16vfs_fclose(File *file);
 
+int fat16vfs_opendir(char *path, Dir *out);
+int fat16vfs_listdir(Dir *dir, DirEntry *entry);
+int fat16vfs_closedir(Dir *dir);
+
 #endif
