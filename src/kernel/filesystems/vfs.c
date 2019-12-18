@@ -46,3 +46,18 @@ int kfclose(FileDesc fd)
     kfree(fd);
     return 0;
 }
+
+int kopendir(char *path, Dir *dir)
+{
+    return rootvfs->opendir(path, dir);
+}
+
+int klistdir(Dir *dir, DirEntry *entry)
+{
+    return rootvfs->listdir(dir, entry);
+}
+
+int kclosedir(Dir *dir)
+{
+    return rootvfs->closedir(dir);
+}

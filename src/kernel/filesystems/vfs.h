@@ -42,7 +42,9 @@ typedef struct VFSInterface {
     int (*fclose)(File *file);
     // int (*fseek)(File *file, int offset, int whence);
     // int (*makedir)(char *path);
-    int (*listdir)(char *path, int index, Dir *out);
+    int (*opendir)(char *path, Dir *out);
+    int (*listdir)(Dir *dir, DirEntry *entry);
+    int (*closedir)(Dir *dir);
 } VFSInterface;
 
 
@@ -93,5 +95,31 @@ int kfwrite(char *buffer, int count, FileDesc fd);
     Returns 0 on success
 */
 int kfclose(FileDesc fd);
+
+/*
+    Opens a directory for reading. Returns the directory descriptor in the 
+    'dir' argument, which is expected to be non NULL.
+    Returns 0 on success, -1 if the path is not correct
+*/
+int kopendir(char *path, Dir *dir);
+
+/*
+    Reads an entry from the 'dir' directory, moving the cursor forward by one.
+    The entry is written in 'entry', which is expected to be non NULL. Each 
+    call to klistdir moves the directory cursor forward, the next call will 
+    return the next entry. The order is not guaranteed, it is file system 
+    specific
+
+    Returns 0 if there are no more entries, 1 otherwise.
+*/ 
+int klistdir(Dir *dir, DirEntry *entry);
+
+/*
+    Closes the directory, freeing the resources allocated by the file system
+    driver. This does NOT free 'dir', just the related file system stuff
+
+    Returns 0 on success, -1 otherwise
+*/ 
+int kclosedir(Dir *dir);
 
 #endif
