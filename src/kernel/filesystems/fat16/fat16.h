@@ -19,6 +19,14 @@
 #define FAT_ATTR_ARCHIVE    0x20
 #define FAT_ATTR_LFN        0x0F
 
+#define FAT16_GET_HOURS(x) (x >> 11)
+#define FAT16_GET_MINUTES(x) (x >> 5 & 0x7f)
+#define FAT16_GET_SECONDS(x) (2 * (x & 0x1f))
+
+#define FAT16_GET_YEAR(x) (1980 + (x >> 9))
+#define FAT16_GET_MONTH(x) (x >> 5 & 0x0f)
+#define FAT16_GET_DAY(x) (x & 0x1f)
+
 /*
     These are data structures saved on disk
 */
