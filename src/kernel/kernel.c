@@ -17,11 +17,12 @@
 #include <kernel/modules.h>
 #include <kernel/devices/vdisk.h>
 #include <kernel/devices/ramdisk/ramdisk.h>
-#include <kernel/filesystems/fat16/fat16.h>
 #include <klibc/string.h>
+#include <kernel/filesystems/vfs.h>
 
 
 struct DiskInterface ramdisk_interface;
+VFSInterface *vfsinterface;
 
 void kernel_setup(multiboot_info_t *header, unsigned int magic)
 {
@@ -46,11 +47,20 @@ void kernel_setup(multiboot_info_t *header, unsigned int magic)
     struct Module *modRamdisk = get_module(0);
     kassert(0 == ramdisk_init(modRamdisk->start, modRamdisk->size));
     kassert(0 == ramdisk_get_diskinterface(&ramdisk_interface));
-    kassert(0 == fat16_read_filesystem(&ramdisk_interface));
+    vfsinterface = fat16_get_vfsinterface(&ramdisk_interface);
+    vfs_setroot(vfsinterface);
 }
 
 void kernel_main(void) 
 {
+    char buff[64];
+    FileDesc fd = kfopen("/DOCS/README.TXT", "r");
+
+    int r = kfread(buff, 63, fd);
+    kfclose(fd);
+    buff[r] = '\0';
+    kprintf("%s", buff);
+
     #define BUFFER_SIZE 1024
     char buffer[BUFFER_SIZE];
     while (true) {

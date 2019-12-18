@@ -21,7 +21,9 @@ CSOURCES = \
 	src/kernel/devices/timer/timer.c \
 	src/kernel/devices/tty/tty.c \
 	src/kernel/devices/ramdisk/ramdisk.c \
+	src/kernel/filesystems/vfs.c \
 	src/kernel/filesystems/fat16/fat16.c \
+	src/kernel/filesystems/fat16/fat16vfs.c \
 	src/kernel/kernel.c \
 	src/kernel/lib/kprintf.c \
 	src/kernel/lib/read_string.c \
