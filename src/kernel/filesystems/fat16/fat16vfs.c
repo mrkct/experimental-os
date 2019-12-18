@@ -86,7 +86,9 @@ int fat16vfs_opendir(char *path, Dir *out)
 {
     FAT16DirEntry folder;
     int offset = fat16_open(path, &folder);
-    if (offset < 0)
+    // The root is not a dir in FAT, but we want to consider it so
+    int is_dir = !strcmp("/", path) || folder.attributes & FAT_ATTR_DIRECTORY;
+    if (offset < 0 || !is_dir)
         return -1;
     out->fs_defined = (void *) offset;
     // TODO: Insert the dir name in out->name
