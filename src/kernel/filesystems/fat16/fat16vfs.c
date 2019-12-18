@@ -46,11 +46,11 @@ int fat16vfs_fopen(char *path, File *out)
         }
     }
     int filename_len = pathlen - last_slash;
-    if (filename_len >= VFS_FILE_LEN) {
-        filename_len = VFS_FILE_LEN;
+    if (filename_len >= VFS_NAME_LEN) {
+        filename_len = VFS_NAME_LEN;
     }
-    memcpy(out->filename, &path[last_slash], filename_len);
-    out->filename[filename_len] = '\0';
+    memcpy(out->name, &path[last_slash], filename_len);
+    out->name[filename_len] = '\0';
     // TODO: This is horrible
     out->filesize = handle->filesize;
     out->fs_defined = handle;

@@ -2,13 +2,36 @@
 #define VFS_H
 
 #define VFS_FS_NAME_LEN 16
-#define VFS_FILE_LEN 32
+#define VFS_NAME_LEN 32
+
+typedef struct DateTime {
+    int year, month, day;
+    int hour, minute, second;
+} DateTime;
 
 typedef struct File {
-    char filename[VFS_FILE_LEN+1];
+    char name[VFS_NAME_LEN+1];
     int filesize;
     void *fs_defined;
 } File;
+
+typedef struct Dir {
+    char name[VFS_NAME_LEN+1];
+    void *fs_defined;
+} Dir;
+
+enum DirEntryType {
+    FILE,
+    DIRECTORY
+};
+
+typedef struct DirEntry {
+    char name[VFS_NAME_LEN+1];
+    enum DirEntryType type;
+    DateTime creation;
+    DateTime lastUpdate;
+    void *fs_defined;
+} DirEntry;
 
 typedef struct VFSInterface {
     char filesystem[VFS_FS_NAME_LEN];
@@ -19,7 +42,7 @@ typedef struct VFSInterface {
     int (*fclose)(File *file);
     // int (*fseek)(File *file, int offset, int whence);
     // int (*makedir)(char *path);
-    // int (*listdir)(char *path, int index, Dir *out);
+    int (*listdir)(char *path, int index, Dir *out);
 } VFSInterface;
 
 
