@@ -20,12 +20,18 @@ Add to your enviroments variables
 Change the variables to point to where your cross-compiler is.  
 Before all run `source config.sh`, this is necessary or the build will fail. 
 You need to run this every time you open a new terminal. 
-Run `make build` to create a .bin you can run with qemu.  
-Run `make run` to build and run qemu with that bin.  
-Run `make build-iso` to create a .iso image. Requires having xorriso installed though.  
+Run `make build` to create a .bin you can run with qemu.
+Run `make build-iso` to create a .iso image. Requires having xorriso installed though.   
+Run `make run-iso` to build and execute from the iso. This is necessary if we are using grub modules (and we are )
+Run `make run` to build and run qemu with that bin.   
+
+Note that to run using grub modules you will need to create an iso and run from that. Since we are using a 
+ramdisk for now, running `make run` won't load the disk. Use `make run-iso` instead.
 
 If you need to add another source file to the codebase you can just edit the Makefile and add the path to the new 
 source code to the CSOURCES variable. 
+
+You will also need a fat 16 disk image that will act as a disk in ram. Create one and put it in `src/ramdisk/ramdisk.initrd`. It will be automatically included in the iso by make. 
 
 ## Done stuff
 - Setups a GDT & IDT
@@ -33,8 +39,9 @@ source code to the CSOURCES variable.
 - Clock & PS2 Keyboard drivers with the PIC 8259
 - Paging, even though it's only a simple identity mapping
 - Dynamic memory allocator (kernel only)
+- FAT16 file system with a virtual file system layer
+    - Note that this works from a ramdisk for now
 
 ## Todo
-- A filesystem:
-    - At first a virtual one, in RAM
+- An IDE disk driver
 - Able to load & run programs
