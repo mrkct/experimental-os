@@ -3,10 +3,12 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <kernel/devices/timer/timer.h>
+#include <kernel/filesystems/vfs.h>
 #include <kernel/lib/kprintf.h>
 #include <kernel/memory/memory.h>
 #include <kernel/monitor.h>
 #include <klibc/string.h>
+#include <kernel/memory/kheap.h>
 
 
 // TODO: Avoid fixed max size arguments
@@ -113,30 +115,22 @@ int monitor_echo(int argc, char **args)
     return 0;
 }
 
-#include <kernel/filesystems/fat16/fat16.h>
-
 int monitor_ls(int argc, char **args)
 {
-    FAT16DirEntry entry;
-    int offset;
-    if (argc == 1) {
-        offset = fat16_open("/", NULL);
-    } else {
-        offset = fat16_open(args[1], NULL);
-    }
-    if (offset < 0) {
+    Dir dir;
+    int result = kopendir(argc == 1 ? "/" : args[1], &dir);
+    if (result != 0) {
         kprintf("could not open folder\n");
         return -1;
     }
-    char filename[12];
-    while (fat16_ls(&offset, &entry)) {
-        memcpy(filename, entry.filename, 11);
-        filename[11] = '\0';
-        if (entry.filesize == 0) {
+
+    DirEntry dirent;
+    while (klistdir(&dir, &dirent)) {
+        if (dirent.type == DIRECTORY)
             kprintf("/");
-        }
-        kprintf("%s\n", filename);
+        kprintf("%s\n", dirent.name);
     }
+    kclosedir(&dir);
 
     return 0;
 }
@@ -146,19 +140,20 @@ int monitor_cat(int argc, char **args)
     const int buffsize = 64;
     char buffer[buffsize];
 
-    struct FAT16FileHandle handle;
     int read;
+    FileDesc file;
 
     for (int i = 1; i < argc; i++) {
-        if (fat16_fopen(args[i], 'r', &handle)) {
+        file = kfopen(args[i], "r");
+        if (file == NULL) {
             kprintf("could not open %s\n", args[i]);
             continue;
         }
-        while (read = fat16_fread(&handle, buffsize-1, buffer)) {
+        while ( (read = kfread(buffer, buffsize-1, file))) {
             buffer[read] = '\0';
             kprintf("%s", buffer);
         }
-        kprintf("\n");
+        kfclose(file);
     }
     
     return 0;
