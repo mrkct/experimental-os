@@ -49,18 +49,18 @@ OBJECT_FILES = $(patsubst %.c, %.o, $(CSOURCES)) $(patsubst %.S, %.o, $(ASMSOURC
 .PHONY: build build-iso release run clean config create-sysroot
 
 config:
-	. ./config.sh
+	@. ./config.sh
 
 create-sysroot: config
-	. ./create-sysroot.sh
+	@. ./create-sysroot.sh
 
 build: kernel.bin
 
 build-iso: kernel.bin
-	./build-iso.sh "kernel.bin" "$(OS_NAME)"
+	@./build-iso.sh "kernel.bin" "$(OS_NAME)"
 
 kernel.bin: create-sysroot $(OBJECT_FILES) 
-	$(CC) -T linker.ld -o kernel.bin $(patsubst %.o, $(OUTF)/%.o, $(OBJECT_FILES)) $(LD_FLAGS)
+	@$(CC) -T linker.ld -o kernel.bin $(patsubst %.o, $(OUTF)/%.o, $(OBJECT_FILES)) $(LD_FLAGS)
 
 clean:
 	rm -f -R sysroot/
@@ -79,8 +79,8 @@ run-iso: build-iso
 	qemu-system-i386 -cdrom "$(OS_NAME).iso"
 
 ./src/kernel/arch/i386/boot/boot.o: config
-	$(AS) src/kernel/arch/i386/boot/boot.S -o $(OUTF)/src/kernel/arch/i386/boot/boot.o $(AS_FLAGS) -I src/kernel/arch/i386/boot/
+	@$(AS) src/kernel/arch/i386/boot/boot.S -o $(OUTF)/src/kernel/arch/i386/boot/boot.o $(AS_FLAGS) -I src/kernel/arch/i386/boot/
 
 %.o: %.c config create-sysroot
-	mkdir -p $(OUTF)/$(shell dirname $@)
-	$(CC) -c $(CC_FLAGS) $< -o $(OUTF)/$@ 
+	@mkdir -p $(OUTF)/$(shell dirname $@)
+	@$(CC) -c $(CC_FLAGS) $< -o $(OUTF)/$@ 
