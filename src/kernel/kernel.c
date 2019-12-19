@@ -19,6 +19,7 @@
 #include <kernel/devices/ramdisk/ramdisk.h>
 #include <klibc/string.h>
 #include <kernel/filesystems/vfs.h>
+#include <kernel/filesystems/fat16/fat16vfs.h>
 
 
 struct DiskInterface ramdisk_interface;

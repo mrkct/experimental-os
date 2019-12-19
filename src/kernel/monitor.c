@@ -36,7 +36,9 @@ int parse_args(char *command, char **args)
 {
     int arg_pos = 0;
     int last_space = 0;
-    for (int i = 0; i < strlen(command)+1; i++) {
+    // We want to loop also over the '\0'
+    int command_len = strlen(command) + 1;
+    for (int i = 0; i < command_len; i++) {
         if (command[i] == ' ' || command[i] == '\0') {
             if (arg_pos == MAX_ARGS) {
                 return -1;
