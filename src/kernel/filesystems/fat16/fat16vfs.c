@@ -103,9 +103,7 @@ int fat16vfs_listdir(Dir *dir, DirEntry *entry)
     int result = fat16_ls(&offset, &fatentry);
     if (result == 0)
         return 0;
-    // TODO: Convert the fat16 filenames to normal ones
-    // (remove the unnecessary spaces + add '.' to extension)
-    memcpy(entry->name, fatentry.filename, 11);
+    fat16_get_formatted_filename(fatentry.filename, entry->name);
     entry->name[12] = '\0';
     if (fatentry.attributes & FAT_ATTR_DIRECTORY) {
         entry->type = DIRECTORY;
