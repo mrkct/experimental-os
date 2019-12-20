@@ -34,6 +34,29 @@ int fat16_cluster_to_offset(int cluster) {
     return (cluster-2) * CLUSTER_SIZE;
 }
 
+int fat16_get_formatted_filename(char *fatfilename, char *filename)
+{
+	int filename_len = 0;
+	int name_len = FAT_FILENAME_LENGTH - 4;
+	while (name_len >= 0 && fatfilename[name_len] == ' ')
+		name_len--;
+	name_len++;
+	filename_len += name_len;
+	memcpy(filename, fatfilename, name_len);
+	
+	if (fatfilename[FAT_FILENAME_LENGTH-3] != ' ') {
+		filename[filename_len++] = '.';
+		for (int i = FAT_FILENAME_LENGTH - 3; i < FAT_FILENAME_LENGTH; i++) {
+			if (fatfilename[i] != ' ') {
+				filename[filename_len++] = fatfilename[i];
+			}
+		}
+	}
+	filename[filename_len++] = '\0';
+	
+	return filename_len;
+}
+
 /*
     Reads the given cluster from disk and stores it in buffer. 'buffer' is 
     expected to be at least CLUSTER_SIZE bytes long
