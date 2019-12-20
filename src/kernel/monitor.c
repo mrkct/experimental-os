@@ -14,6 +14,8 @@
 // TODO: Avoid fixed max size arguments
 #define MAX_ARGS 25
 
+#define UNUSED __attribute__((unused))
+
 struct MonitorCommand commands[] = {
     {"help", "Displays all available commands with their descriptions", monitor_help},
     {"ticks", "Displays how many CPU ticks have occurred since boot", monitor_ticks},
@@ -75,7 +77,9 @@ int monitor_handle(char *command)
     return 0;
 }
 
-int monitor_help(int argc, char **arguments)
+
+
+int monitor_help(UNUSED int argc, UNUSED char **args)
 {
     kprintf("Here is a list of all availables commands:\n");
     int commands_length = (int) (sizeof(commands) / sizeof(commands[0]));
@@ -86,13 +90,13 @@ int monitor_help(int argc, char **arguments)
     return 0;
 }
 
-int monitor_ticks(int argc, char **arguments)
+int monitor_ticks(UNUSED int argc, UNUSED char **arguments)
 {
     kprintf("%d\n", timer_get_ticks());
     return 0;
 }
 
-int monitor_system(int argc, char **arguments)
+int monitor_system(UNUSED int argc, UNUSED char **arguments)
 {
     uint32_t eax, ebx, ecx, edx;
     __get_cpuid(0, &eax, &ebx, &ecx, &edx);

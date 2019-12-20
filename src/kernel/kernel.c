@@ -29,6 +29,8 @@ void kernel_setup(multiboot_info_t *header, unsigned int magic)
 {
     terminal_initialize();
 
+    kassert(magic == MULTIBOOT_BOOTLOADER_MAGIC);
+
     init_gdt();
     init_idt();
     timer_init(1000);

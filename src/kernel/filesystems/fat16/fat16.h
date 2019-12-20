@@ -137,6 +137,6 @@ int fat16_is_entry_unused(FAT16DirEntry *entry);
 int fat16_get_next_cluster(int cluster);
 int fat16_cluster_to_offset(int cluster);
 
-int fat16_get_formatted_filename(char *, char *);
+int fat16_get_formatted_filename(unsigned char *, unsigned char *);
 
 #endif

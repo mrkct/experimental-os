@@ -34,7 +34,7 @@ int fat16_cluster_to_offset(int cluster) {
     return (cluster-2) * CLUSTER_SIZE;
 }
 
-int fat16_get_formatted_filename(char *fatfilename, char *filename)
+int fat16_get_formatted_filename(unsigned char *fatfilename, unsigned char *filename)
 {
 	int filename_len = 0;
 	int name_len = FAT_FILENAME_LENGTH - 4;
@@ -72,7 +72,7 @@ int fat16_get_next_cluster(int cluster) {
     return fs.fat[cluster];
 }
 
-int fat16_filenamecmp(char *a, char *b) {
+int fat16_filenamecmp(unsigned char *a, unsigned char *b) {
     char buffer1[FAT_FILENAME_LENGTH+1];
     char buffer2[FAT_FILENAME_LENGTH+1];
     
@@ -136,14 +136,6 @@ int fat16_read_filesystem(struct DiskInterface *diskinterface)
     return 0;
 }
 
-void DEBUG_printentrybytes(FAT16DirEntry *e)
-{
-    char *p = (char *) e;
-    for (int i = 0; i < sizeof(FAT16DirEntry); i++)
-        kprintf("%c", *(p+i));
-    kprintf("\n");
-}
-
 /*
     Returns the next entry in a directory, given an offset in the disk.
     @param offset: The offset in the disk, in bytes, where a list of folder 
@@ -189,7 +181,7 @@ int fat16_ls(int *offset, FAT16DirEntry *out)
     @param out: Where, if an entry is found, the entry will be stored
     Returns the disk offset of the entry if found (>0), -1 otherwise
 */
-int fat16_findentry(char *name, int diroffset) {
+int fat16_findentry(unsigned char *name, int diroffset) {
     FAT16DirEntry entry;
     while(fat16_ls(&diroffset, &entry)) {
         if (fat16_filenamecmp(entry.filename, name) == 0) {
@@ -220,7 +212,7 @@ int fat16_open_support(const char *path, int length, FAT16DirEntry *entry) {
     int diroff = fat16_open_support(path, last_slash, entry);
     // Directory was not found
     if (diroff < 0)     return -1;
-    char dirname[12];
+    unsigned char dirname[12];
     int dirname_length = length - (last_slash+1);
     memcpy(dirname, &path[last_slash+1], dirname_length);
     dirname[dirname_length] = '\0';

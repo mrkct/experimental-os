@@ -131,7 +131,7 @@ int fat16vfs_listdir(Dir *dir, DirEntry *entry)
     return 1;
 }
 
-int fat16vfs_closedir(Dir *dir)
+int fat16vfs_closedir(__attribute__((unused)) Dir *dir)
 {
     // We don't do anything, we use fs_defined for a single int stored
     // in the pointer itself 

@@ -10,13 +10,13 @@ typedef struct DateTime {
 } DateTime;
 
 typedef struct File {
-    char name[VFS_NAME_LEN+1];
+    unsigned char name[VFS_NAME_LEN+1];
     int filesize;
     void *fs_defined;
 } File;
 
 typedef struct Dir {
-    char name[VFS_NAME_LEN+1];
+    unsigned char name[VFS_NAME_LEN+1];
     void *fs_defined;
 } Dir;
 
@@ -26,7 +26,7 @@ enum DirEntryType {
 };
 
 typedef struct DirEntry {
-    char name[VFS_NAME_LEN+1];
+    unsigned char name[VFS_NAME_LEN+1];
     enum DirEntryType type;
     DateTime creation;
     DateTime lastUpdate;
@@ -34,7 +34,7 @@ typedef struct DirEntry {
 } DirEntry;
 
 typedef struct VFSInterface {
-    char filesystem[VFS_FS_NAME_LEN];
+    unsigned char filesystem[VFS_FS_NAME_LEN];
 
     int (*fopen)(char *path, File *out);
     int (*fread)(char *buffer, int count, File *file);

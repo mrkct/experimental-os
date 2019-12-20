@@ -21,7 +21,7 @@ static pde_t *kern_pgdir;
     TODO: This actually also creates the page_free_list. Also it would be nice 
     to separate an operation on the multiboot from the paging code. 
 */
-static void multiboot_detect_available_pages(multiboot_info_t *mbh)
+static void multiboot_detect_available_pages(__attribute__((unused)) multiboot_info_t *mbh)
 {
     int reserved_pages = ((int) boot_alloc(0)) / PGSIZE;
     for (int i = 0; i < reserved_pages; i++) {
