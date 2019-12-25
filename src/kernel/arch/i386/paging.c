@@ -9,7 +9,6 @@
 
 static uint32_t npages;
 static struct PageInfo *pages;
-static struct PageInfo *page_free_list;
 
 static pde_t *kern_pgdir;
 
@@ -18,47 +17,33 @@ static pde_t *kern_pgdir;
     actually available for use and which are reserved for hardware mapped 
     devices. Here we set which pages are actually available for use and which 
     are not
-    TODO: This actually also creates the page_free_list. Also it would be nice 
-    to separate an operation on the multiboot from the paging code. 
+    TODO: It would be nice to separate an operation on the multiboot from the 
+    paging code. 
 */
 static void multiboot_detect_available_pages(__attribute__((unused)) multiboot_info_t *mbh)
 {
     int reserved_pages = ((int) boot_alloc(0)) / PGSIZE;
     for (int i = 0; i < reserved_pages; i++) {
         pages[i].reserved = true;
-        pages[i].references = 0;
-        pages[i].nextfree = NULL;
+        pages[i].available = false;
     }
 
-    page_free_list = NULL;
     for (unsigned i = reserved_pages; i < npages; i++) {
         pages[i].reserved = false;
-        pages[i].references = 0;
-        pages[i].nextfree = page_free_list;
-        page_free_list = &pages[i];
+        pages[i].available = true;
     }
 }
 
-
-/*
-    Initializes pagination in the system and setups an identity mapping for 
-    the whole memory.
-    TODO WARNING: Not all mapping for the memory is done, see TODO in paging.h
-*/
 void paging_init(multiboot_info_t *mbh)
 {
     uint32_t total_memory = memory_get_total();
     npages = total_memory / PGSIZE;
     pages = (struct PageInfo *) boot_alloc(sizeof(struct PageInfo) * npages);
     multiboot_detect_available_pages(mbh);
-    kern_pgdir = pgdir_create(true);
+    kern_pgdir = pgdir_create();
     pgdir_map(kern_pgdir, 0, ADDRESS_SPACE_SIZE, 0, PG_PRESENT | PG_USER);
 }
 
-/*
-    Loads the argument page directory and flushes the TLB. This also enables 
-    paging, if it was not set already
-*/
 void paging_load(pdir_t pgdir)
 {
     load_cr3((uint32_t) pgdir);
@@ -74,66 +59,48 @@ pdir_t paging_kernel_pgdir()
     return kern_pgdir;
 }
 
-/*
-    Allocates a page from the free list. Note that this function does NOT 
-    increment the 'references' field of the returned structure, it is the 
-    caller's job to do that. Returns NULL if no pages are free
-*/
-struct PageInfo *page_alloc(void)
-{
-    if (page_free_list == NULL)
-        return NULL;
-    struct PageInfo *page = page_free_list;
-    page_free_list = page->nextfree;
+struct PageInfo *page_alloc(size_t count) {
+    // TODO: This is terrible
+    for (int i = 0; i < (int) (npages - (count-1)); i++) {
+        bool valid = true;
+        for (size_t k = 0; k < count; k++) {
+            if (!pages[i + k].available) {
+                valid = false;
+                break;
+            }
+        }
+        if (valid) {
+            for (size_t k = 0; k < count; k++)
+                pages[i + k].available = false;
+            
+            return &pages[i];
+        }
+    }
 
-    page->references = 0;
-    page->nextfree = NULL;
-
-    return page;
+    return NULL;
 }
 
-/*
-    Returns a page to the free list. Check that the 'references' field is 
-    equal to 0 when you want to free a page, otherwise this function will 
-    panic
-*/
 void page_free(struct PageInfo *page)
 {
-    kassert(page != NULL);
-    kassert(page->references == 0);
-    page->nextfree = page_free_list;
-    page_free_list = page;
+    page->available = true;
 }
 
-/*
-    Returns a new page directory, uninitialized. If 'create_table' is true 
-    it will also allocate a page table for all entries
-*/
-pde_t *pgdir_create(bool create_tables)
+pde_t *pgdir_create(void)
 {
-    struct PageInfo *page = page_alloc();
+    struct PageInfo *page = page_alloc(1);
     kassert(page != NULL);
-    page->references++;
     pde_t *pgdir = (pde_t*) pageindex2pa((paddr_t) (page - pages));
 
-    if (create_tables) {
-        for (int i = 0; i < PGDIR_ENTRIES; i++) {
-            struct PageInfo *page = page_alloc();
-            page->references++;
-            kassert(page != NULL);
-            paddr_t pa = pageindex2pa((paddr_t) (page - pages));
-            pgdir[i] = pa | PG_PRESENT | PG_USER;
-        }
+    for (int i = 0; i < PGDIR_ENTRIES; i++) {
+        struct PageInfo *page = page_alloc(1);
+        kassert(page != NULL);
+        paddr_t pa = pageindex2pa((paddr_t) (page - pages));
+        pgdir[i] = pa | PG_PRESENT | PG_USER;
     }
 
     return (pde_t*) pgdir;
 }
 
-/*
-    Navigates the page directory and returns the correspondant page table 
-    entry to the argument virtual address. Returns NULL if there is no page 
-    table for the address frame
-*/
 pte_t *pgdir_addr2entry(pdir_t pgdir, paddr_t va)
 {
     pde_t e = pgdir[PDX(va)];
@@ -145,13 +112,13 @@ pte_t *pgdir_addr2entry(pdir_t pgdir, paddr_t va)
     return &table[PTX(va)];
 }
 
-/*
-    Maps in a page directory all addresses in the ranges ['va' -> 'va+size'] 
-    to ['pa' -> 'pa+size'] using the 'permissions' bits for each page table entry.
-    Make sure 'permissions' is just 12 bits and that 'pa' and 'va' are aligned 
-    to PGSIZE, or this function will panic
-*/
-void pgdir_map(pdir_t pgdir, vaddr_t va, unsigned long size, paddr_t pa, uint16_t permissions)
+void 
+pgdir_map(
+    pdir_t pgdir, 
+    vaddr_t va, 
+    unsigned long size, 
+    paddr_t pa, 
+    uint16_t permissions)
 {
     kassert(pa % PGSIZE == 0);
     kassert(va % PGSIZE == 0);

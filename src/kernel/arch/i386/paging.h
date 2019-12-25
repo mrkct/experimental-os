@@ -50,25 +50,70 @@
 
 struct PageInfo {
     bool reserved;
-    int references;
-    struct PageInfo *nextfree;
+    bool available;
 };
-
-void paging_init(multiboot_info_t *);
-
-struct PageInfo *page_alloc(void);
-void page_free(struct PageInfo*);
 
 typedef uint32_t pde_t;
 typedef uint32_t pte_t;
 typedef uint32_t *pdir_t;
 
-pde_t *pgdir_create(bool);
-pte_t *pgdir_addr2entry(pdir_t, paddr_t);
-void pgdir_map(pdir_t, uint32_t, unsigned long, uint32_t, uint16_t);
+/*
+    Initializes pagination in the system and setups an identity mapping for 
+    the whole memory.
+    TODO WARNING: Not all mapping for the memory is done, see TODO in paging.h
+*/
+void paging_init(multiboot_info_t *);
+
+/*
+    Returns true if a page is available for use, false othewise
+*/
+bool page_available(struct PageInfo *page);
+
+/*
+    Finds the first page in the 'pages' array that starts a contiguous area 
+    of at least 'count' pages.
+    Returns NULL if no area at least 'count' pages big was found, otherwise 
+    returns the pointer of the first page at the start of the area. 
+*/
+struct PageInfo *page_alloc(size_t count);
+
+/*
+    Sets the argument page as available to be re-allocated
+*/
+void page_free(struct PageInfo *page);
+
+/*
+    Returns a new page directory, uninitialized. All page tables will also 
+    be allocated, even though no address will be mapped and they might 
+    contain junk
+*/
+pde_t *pgdir_create(void);
+
+/*
+    Navigates the page directory and returns the correspondant page table 
+    entry to the argument virtual address. Returns NULL if there is no page 
+    table for the address frame
+*/
 pte_t *pgdir_addr2entry(pdir_t, paddr_t);
 
+/*
+    Maps in a page directory all addresses in the ranges ['va' -> 'va+size'] 
+    to ['pa' -> 'pa+size'] using the 'permissions' bits for each page table entry.
+    Make sure 'permissions' is just 12 bits and that 'pa' and 'va' are aligned 
+    to PGSIZE, or this function will panic
+*/
+void pgdir_map(pdir_t, uint32_t, unsigned long, uint32_t, uint16_t);
+
+/*
+    Loads the argument page directory and flushes the TLB. This also enables 
+    paging, if it was not set already
+*/
 void paging_load(pdir_t pgdir);
+
+/*
+    Returns the kernel pgdir, a page directory where an identity mapping 
+    is setup for every address available
+*/
 pdir_t paging_kernel_pgdir();
 
 static inline uint32_t ROUNDUP(uint32_t value, uint32_t multiple)
