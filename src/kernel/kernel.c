@@ -41,8 +41,6 @@ void kernel_setup(multiboot_info_t *header, unsigned int magic)
 
     int loaded = load_grub_modules(header);
     kprintf("Loaded %d grub modules\n", loaded);
-
-    kmalloc_init(boot_alloc(KERNEL_HEAP_SIZE), KERNEL_HEAP_SIZE);
     
     paging_init(header);
     paging_load(paging_kernel_pgdir());

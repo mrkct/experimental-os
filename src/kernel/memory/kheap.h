@@ -5,22 +5,15 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-struct Interval {
-    char *from;
-    char *end;
-    struct Interval *next;
-};
+#define MALLOC_MAGIC 0x1a2b3c4d
 
-struct UsedMemoryHeader {
+struct MallocHeader {
     uint32_t magic;
-    uint32_t size;
+    struct PageInfo *pageInfo;
+    int pages;
 };
 
-void interval_insert(char *, char *);
-void *interval_alloc(size_t, bool);
-void interval_defragment();
-void *kmalloc(size_t);
+void *kmalloc(size_t count);
 void kfree(void *);
-void kmalloc_init(char *, uint32_t);
 
 #endif

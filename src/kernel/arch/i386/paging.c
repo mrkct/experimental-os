@@ -128,3 +128,7 @@ pgdir_map(
         *entry = (pa + i) | permissions;
     }
 }
+
+void *page2addr(struct PageInfo *page) {
+    return pageindex2pa(page - pages);
+}

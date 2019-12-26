@@ -116,6 +116,11 @@ void paging_load(pdir_t pgdir);
 */
 pdir_t paging_kernel_pgdir();
 
+/*
+    Returns the address where the space of a page starts
+*/
+void *page2addr(struct PageInfo *page);
+
 static inline uint32_t ROUNDUP(uint32_t value, uint32_t multiple)
 {
     if (value % multiple == 0)
