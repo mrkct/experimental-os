@@ -82,6 +82,7 @@ struct PageInfo *page_alloc(size_t count) {
 
 void page_free(struct PageInfo *page)
 {
+    kassert(page->reserved == false);
     page->available = true;
 }
 
@@ -130,5 +131,5 @@ pgdir_map(
 }
 
 void *page2addr(struct PageInfo *page) {
-    return pageindex2pa(page - pages);
+    return (void *) pageindex2pa(page - pages);
 }
