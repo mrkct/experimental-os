@@ -83,9 +83,9 @@ struct PageInfo *page_alloc(size_t count);
 void page_free(struct PageInfo *page);
 
 /*
-    Returns a new page directory, uninitialized. All page tables will also 
-    be allocated, even though no address will be mapped and they might 
-    contain junk
+    Returns a new page directory, where only the addresses under KERNEL_END
+    are mapped to the kernel. The rest of the addresses will have 0 in their 
+    pgdir entry.
 */
 pde_t *pgdir_create(void);
 

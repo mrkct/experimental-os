@@ -34,13 +34,34 @@ static void multiboot_detect_available_pages(__attribute__((unused)) multiboot_i
     }
 }
 
+/*
+    Creates the kernel page directory, where virtual addresses match physical 
+    ones. This is to be called before any call to pgdir_create as that one 
+    depends on the existance of a kernel pgdir
+*/
+static void kern_pgdir_create(void)
+{
+    struct PageInfo *page = page_alloc(1);
+    kassert(page != NULL);
+    pde_t *pgdir = (pde_t*) pageindex2pa((paddr_t) (page - pages));
+
+    for (int i = 0; i < PGDIR_ENTRIES; i++) {
+        struct PageInfo *page = page_alloc(1);
+        kassert(page != NULL);
+        paddr_t pa = pageindex2pa((paddr_t) (page - pages));
+        pgdir[i] = pa | PG_PRESENT | PG_USER;
+    }
+
+    kern_pgdir = pgdir;
+}
+
 void paging_init(multiboot_info_t *mbh)
 {
     uint32_t total_memory = memory_get_total();
     npages = total_memory / PGSIZE;
     pages = (struct PageInfo *) boot_alloc(sizeof(struct PageInfo) * npages);
     multiboot_detect_available_pages(mbh);
-    kern_pgdir = pgdir_create();
+    kern_pgdir_create();
     pgdir_map(kern_pgdir, 0, ADDRESS_SPACE_SIZE, 0, PG_PRESENT | PG_USER);
 }
 
@@ -92,14 +113,17 @@ pde_t *pgdir_create(void)
     kassert(page != NULL);
     pde_t *pgdir = (pde_t*) pageindex2pa((paddr_t) (page - pages));
 
-    for (int i = 0; i < PGDIR_ENTRIES; i++) {
+    const int kernel_page_end = KERNEL_END / PGSIZE;
+    for (int i = 0; i < kernel_page_end; i++) {
+        pgdir[i] = kern_pgdir[i];
+    }
+    for (int i = kernel_page_end; i < PGDIR_ENTRIES; i++) {
         struct PageInfo *page = page_alloc(1);
         kassert(page != NULL);
-        paddr_t pa = pageindex2pa((paddr_t) (page - pages));
-        pgdir[i] = pa | PG_PRESENT | PG_USER;
+        pgdir[i] = 0;
     }
 
-    return (pde_t*) pgdir;
+    return pgdir;
 }
 
 pte_t *pgdir_addr2entry(pdir_t pgdir, paddr_t va)
