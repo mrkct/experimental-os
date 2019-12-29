@@ -33,6 +33,11 @@ source code to the CSOURCES variable.
 
 You will also need a fat 16 disk image that will act as a disk in ram. Create one and put it in `src/ramdisk/ramdisk.initrd`. It will be automatically included in the iso by make. 
 
+## Notes
+
+This is NOT a higher-half kernel: the kernel is mapped in the lower 128MB, programs are expected to load 
+after that.
+
 ## Done stuff
 - Setups a GDT & IDT
 - External interrupt support

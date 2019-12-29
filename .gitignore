@@ -1,10 +1,11 @@
-*.o
-*.bin
-*.iso
 /sysroot
 /out
 /isodir
+/disk
+src/ramdisk/ramdisk.initrd
+*.o
+*.bin
+*.iso
 notes_*.md
 grub.cfg
 dump.S
-src/ramdisk/ramdisk.initrd
