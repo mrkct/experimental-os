@@ -7,14 +7,18 @@
 #include <kernel/arch/multiboot.h>
 
 /*
-    This is the memory map for the OS
+    This is the virtual memory map
 
     [0, 1MB]: Not used, we save all the bios structures
-    [1MB, kern_end]: The kernel text & static data
-    [kern_end, end_modules]: GRUB's loaded modules
-    [end_modules, end_modules+16MB]: Kernel heap space
-    [end_modules+16MB, 0xffffffff]: Available to programs
+    [1MB, 128MB]: The kernel stuff
+    [128MB, 0x8010000 (128MB + 64KB)]: Stack of the currently running process
+    [0x8010000, 4GB]: Available to programs
 */
+
+#define KERNEL_END          0x08000000 
+#define USER_STACK_BOTTOM   KERNEL_END
+#define USER_STACK_TOP      0x08010000
+
 /*
     TODO: Change this into the memory address where the kernel ends in 
     memory. This will require adding a symbol 'end' to the linker script at 
