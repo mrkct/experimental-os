@@ -55,12 +55,16 @@ void init_idt();
     an interrupt happens and we reach 'interrupt_handler'
 */
 struct intframe_t {
-   uint32_t ds;
-   uint32_t edi, esi, ebp, esp, ebx, edx, ecx, eax;
-   uint32_t int_no, err_code;
-   uint32_t eip, cs, eflags, useresp, ss;
+    uint32_t ds;
+    /* 
+        Note that 'curresp' is the esp as it is when we're
+        in an interrupt handler. If you're looking for the
+        esp of the program see 'useresp'
+    */
+    uint32_t edi, esi, ebp, curresp, ebx, edx, ecx, eax;
+    uint32_t int_no, err_code;
+    uint32_t eip, cs, eflags, useresp, ss;
 } __attribute__((packed));
 
 typedef struct intframe_t intframe_t;
-
 #endif
