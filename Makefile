@@ -31,6 +31,7 @@ CSOURCES = \
 	src/kernel/memory/kheap.c \
 	src/kernel/monitor.c \
 	src/kernel/modules.c \
+	src/kernel/process.c \
 	src/klibc/string.c \
 	src/klibc/ctype.c \
 

@@ -22,7 +22,8 @@ struct MonitorCommand commands[] = {
     {"system", "Displays various info about the system", monitor_system},
     {"echo", "Writes all the argument again", monitor_echo},
     {"ls", "Lists the content of a directory", monitor_ls},
-    {"cat", "Prints the content of a file", monitor_cat}
+    {"cat", "Prints the content of a file", monitor_cat},
+    {"run", "Runs a program", monitor_run}
 };
 
 /*
@@ -162,5 +163,33 @@ int monitor_cat(int argc, char **args)
         kfclose(file);
     }
     
+    return 0;
+}
+
+#include <kernel/process.h>
+
+int monitor_run(int argc, char **argv)
+{
+    if (argc < 2) {
+        kprintf("you need to pass a program to load\n");
+        return -1;
+    }
+    char *binary = (char *) kmalloc(1024);
+    FileDesc file = kfopen(argv[1], "r");
+    if (file == NULL) {
+        kprintf("could not open %s\n", argv[1]);
+        return -2;
+    }
+    int read = kfread(binary, 1024, file);
+    kprintf("opening %s (%d bytes)\n", argv[1], read);
+    kfclose(file);
+
+    Pid pid = process_create(binary);
+    kprintf("pid: %d\n", pid);
+
+    Process proc;
+    process_find(pid, &proc);
+    process_run(&proc);
+
     return 0;
 }
