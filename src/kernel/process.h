@@ -4,7 +4,7 @@
 #include <kernel/arch/i386/paging.h>
 #include <kernel/arch/i386/boot/descriptor_tables.h>
 
-#define MAX_PROCESSES 64
+#define MAX_PROCESSES 8
 
 #define PROC_STATE_UNUSED 0
 #define PROC_STATE_INITIALIZED 1
@@ -13,12 +13,16 @@
 
 typedef int Pid;
 
+typedef struct ProcessState {
+    uint32_t edi, esi, ebp, ebx, edx, ecx, eax;
+    uint32_t eip, cs, eflags, esp, ss;
+} ProcessState;
+
 typedef struct Process {
     Pid pid;
     int state;
     pdir_t pgdir;
-    intframe_t intframe;
-    // idk
+    ProcessState procState;
 } Process;
 
 /*
@@ -30,7 +34,7 @@ typedef struct Process {
     the system cannot create anymore processes, -2 if the binary image is not 
     valid
 */
-Pid process_create(char *binary);
+Process *process_create(char *binary);
 
 /*
     Finds the corresponding process and writes it in proc.
@@ -49,11 +53,15 @@ int process_enqueue(Pid pid);
 int process_destroy(Pid pid);
 
 /*
-    Runs the argument process. This function gives control to the process, but 
-    when the time slice is over will receive back control
+    Sets the process state as running.
+    TODO: Change name, this is misleading. Only the scheduler should 
+    call this as it modified the 'current_proc'
 */
 void process_run(Process *proc);
 
-int process_setup(Process *proc, char *binary);
+/*
+    Called at every timer tick, changes the currently running process
+*/
+void scheduler_tick(struct intframe_t *intframe);
 
 #endif

@@ -77,7 +77,11 @@ void paging_load(pdir_t pgdir)
 
 pdir_t paging_kernel_pgdir()
 {
-    return kern_pgdir;
+    if (kern_pgdir[0] == 0) {
+        return NULL;
+    } else {
+        return kern_pgdir;
+    }
 }
 
 struct PageInfo *page_alloc(size_t count) {

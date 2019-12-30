@@ -1,0 +1,4 @@
+PROGRAMS = \
+	hello
+
+build:

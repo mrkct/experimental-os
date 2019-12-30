@@ -184,12 +184,7 @@ int monitor_run(int argc, char **argv)
     kprintf("opening %s (%d bytes)\n", argv[1], read);
     kfclose(file);
 
-    Pid pid = process_create(binary);
-    kprintf("pid: %d\n", pid);
-
-    Process proc;
-    process_find(pid, &proc);
-    process_run(&proc);
+    process_create(binary);
 
     return 0;
 }

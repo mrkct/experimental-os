@@ -32,8 +32,6 @@ void kernel_setup(multiboot_info_t *header, unsigned int magic)
     kassert(magic == MULTIBOOT_BOOTLOADER_MAGIC);
 
     init_gdt();
-    init_idt();
-    timer_init(1000);
     
     uint32_t memory = multiboot_read_memory(header);
     memory_set_total(memory);
@@ -50,6 +48,10 @@ void kernel_setup(multiboot_info_t *header, unsigned int magic)
     kassert(0 == ramdisk_get_diskinterface(&ramdisk_interface));
     vfsinterface = fat16_get_vfsinterface(&ramdisk_interface);
     vfs_setroot(vfsinterface);
+
+    scheduler_init();
+    init_idt();
+    timer_init(1);
 }
 
 void kernel_main(void) 
