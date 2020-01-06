@@ -35,7 +35,7 @@
 */
 
 alltraps:
-    pusha
+    pushal
     
     mov %ds, %eax
     push %eax
@@ -47,6 +47,7 @@ alltraps:
     mov %ax, %fs
 
     push %esp
+    cld
     call interrupt_handler
     add $4, %esp
 
@@ -56,9 +57,10 @@ alltraps:
     mov %ax, %gs
     mov %ax, %fs
     
-    popa
-    add $8, %esp    # to remove the error code + int number
-    
+    popal
+    mov -20(%esp), %esp     # popal does NOT restore %esp. We do that ourself instead
+    add $8, %esp            # to remove the error code + int number
+
     iret
 
 ISR_NOERRCODE isr0, 0

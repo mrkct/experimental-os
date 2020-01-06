@@ -1,16 +1,15 @@
-#include <stdint.h>
-#include <stddef.h>
 #include <stdbool.h>
-#include <kernel/arch/i386/paging.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <kernel/memory/kheap.h>
 #include <kernel/arch/i386/boot/descriptor_tables.h>
+#include <kernel/arch/i386/paging.h>
+#include <kernel/arch/i386/x86.h>
 #include <kernel/lib/kassert.h>
-#include <kernel/process.h>
 #include <kernel/elf.h>
 #include <klibc/string.h>
+#include <kernel/process.h>
 
-
-Process processes[MAX_PROCESSES];
-Process *current_proc;
 
 /*
     Allocates 'count' bytes and maps from 'vaddr' to 'vaddr' + count to that 
@@ -34,28 +33,8 @@ static void region_alloc(pdir_t pgdir, vaddr_t vaddr, size_t count)
     }
 }
 
-/*
-    Prepares some of the registers in the intframe of the process for 
-    execution. In particular this allocates the stack and sets the %cs, %ds, 
-    %ss, %esp and eflags registers. This does NOT set the %eip register as 
-    it needs to read the entry point of the program. This is the job of 
-    'read_elf'
-*/
-static void set_initial_intframe(Process *process)
+static uint32_t load_elf(Process *process, char *binary) 
 {
-    const int stack_size = (USER_STACK_TOP - USER_STACK_BOTTOM);
-    region_alloc(process->pgdir, USER_STACK_BOTTOM, stack_size);
-
-    // TODO: Actually put real values there instead of copying
-    process->procState.cs = 0x8;
-    process->procState.eflags = 0x206;
-    process->procState.esp = USER_STACK_TOP;
-    process->procState.ss = 0x4;
-}
-
-static int load_elf(Process *process, char *binary) 
-{
-    paging_load(process->pgdir);
     ELFHeader *head = (ELFHeader *) binary;
     ELFProgHeader *prog = (ELFProgHeader *) (binary + head->progHeader);
     for (size_t i = 0; i < head->progEntries; i++) {
@@ -83,169 +62,129 @@ static int load_elf(Process *process, char *binary)
             );
         }
     }
-    process->procState.eip = head->entry;
-    paging_load(paging_kernel_pgdir());
 
-    return 0;
+    return head->entry;
 }
 
-Process *process_create(char *binary)
+
+
+Process processes[MAX_PROCESSES];
+Process *running_proc;
+
+static int get_next_pid(void)
 {
-    Process *proc = NULL;
+    static int pid = 0;
+    return pid++;
+}
+
+static Process *find_free_process(void)
+{
     for (int i = 0; i < MAX_PROCESSES; i++) {
         if (processes[i].state == PROC_STATE_UNUSED) {
-            processes[i].pgdir = pgdir_create();
-            processes[i].pid = i;
-            proc = &processes[i];
-            break;
+            return &processes[i];
         }
     }
 
-    if (proc == NULL || load_elf(proc, binary) < 0)
-        return NULL;
+    return NULL;
+}
+
+int process_start(char *binary)
+{
+    Process *p = find_free_process();
+    kassert(p != NULL);
+    p->state = PROC_STATE_READY;
+    p->pgdir = pgdir_create();
+    p->pid = get_next_pid();
+
+    char *stack = (char *) kmalloc(PROCESS_KERNEL_STACK_SIZE);
+    p->registers.esp = (uint32_t) (stack + PROCESS_KERNEL_STACK_SIZE -1);
     
-    set_initial_intframe(proc);
-    proc->state = PROC_STATE_READY;
-
-    return proc;
-}
-
-int process_find(Pid pid, Process *proc)
-{
-    if (pid < 0 || pid >= MAX_PROCESSES)
-        return -1;
-    *proc = processes[pid];
-    
-    return 0;
-}
-
-int process_enqueue(Pid pid)
-{
-    if (pid < 0 || pid >= MAX_PROCESSES)
-        return -1;
-    processes[pid].state = PROC_STATE_READY;
-    
-    return 0;
-}
-
-int process_destroy(Pid pid)
-{
-    // TODO: Assert that the currently loaded pgdir is NOT the one
-    // being deleted
-    if (pid < 0 || pid >= MAX_PROCESSES)
-        return -1;
-    // TODO: Probably free some memory? idk
-    // pgdir_free(processes[pid].pgdir);
-    processes[pid].state = PROC_STATE_UNUSED;
-
-    return 0;
-}
-
-void process_run(Process *proc)
-{
-    if (current_proc != NULL) {
-        current_proc->state = PROC_STATE_READY;
-    }
-    proc->state = PROC_STATE_RUNNING;
-    current_proc = proc;
-}
-
-static void copy_procstate2intframe(
-    ProcessState *state, 
-    struct intframe_t *intframe
-)
-{
-    intframe->edi = state->edi;
-    intframe->esi = state->esi;
-    intframe->ebp = state->ebp;
-    intframe->ebx = state->ebx;
-    intframe->edx = state->edx;
-    intframe->ecx = state->ecx;
-    intframe->eax = state->eax;
-    intframe->eip = state->eip;
-    intframe->cs  = state->cs;
-    intframe->eflags = state->eflags;
-    intframe->useresp = state->esp;
-    intframe->ss = state->ss;
-}
-
-static void copy_intframe2procstate(
-    struct intframe_t *intframe,
-    ProcessState *state
-)
-{
-    state->edi = intframe->edi;
-    state->esi = intframe->esi;
-    state->ebp = intframe->ebp;
-    state->ebx = intframe->ebx;
-    state->edx = intframe->edx;
-    state->ecx = intframe->ecx;
-    state->eax = intframe->eax;
-    state->eip = intframe->eip;
-    state->cs  = intframe->cs;
-    state->eflags = intframe->eflags;
-    state->esp = intframe->useresp;
-    state->ss = intframe->ss;
-}
-
-void scheduler_init()
-{
-    current_proc = &processes[0];
-    current_proc->state = PROC_STATE_RUNNING;
-    current_proc->pgdir = paging_kernel_pgdir();
-    current_proc->pid = 0;
-    
-}
-
-void wait() {
-    volatile uint64_t i = 0;
-    while (i < 40000000) {
-        i++;
-    }
-}
-
-void scheduler_tick(struct intframe_t *intframe)
-{
     /*
-    kprintf("--- Printing intframe ---\n");
-    kprintf("ds: %x\n", intframe->ds);
-    kprintf("edi: %x \n", intframe->edi);
-    kprintf("esi: %x \n", intframe->esi);
-    kprintf("ebp: %x \n", intframe->ebp);
-    kprintf("curresp: %x \n", intframe->curresp);
-    kprintf("ebx: %x \n", intframe->ebx);
-    kprintf("edx: %x \n", intframe->edx);
-    kprintf("ecx: %x \n", intframe->ecx);
-    kprintf("eax: %x \n", intframe->eax);
-    kprintf("int_no: %x \n", intframe->int_no);
-    kprintf("err_code: %x \n", intframe->err_code);
-    kprintf("eip: %x \n", intframe->eip);
-    kprintf("cs: %x \n", intframe->cs);
-    kprintf("eflags: %x \n", intframe->eflags);
-    kprintf("useresp: %x \n", intframe->useresp);
-    kprintf("ss: %x \n", intframe->ss);
+        load_elf needs to write directly to the specific memory addresses 
+        where the programs wants to be put at. Before doing that it allocs 
+        the memory and maps it there. As such we load the process page dir 
+        so that page dir is changed instead of the current one. We restore 
+        the current one before going ahead though
     */
+    pdir_t current_pgdir = (pdir_t) read_cr3();
+    paging_load(p->pgdir);
+    uint32_t entry = load_elf(p, binary);
+    paging_load(current_pgdir);
+
+    // We need to fake the stack as if the process has already been interrupted once
+    uint32_t *p_esp = (uint32_t *) p->registers.esp;
+    // The data pushed by the cpu when an interrupt happens 
+    // (and popped by 'iret')
+    *p_esp = 0x206;               // eflags
+    *(p_esp-1) = 0x8;                 // cs
+    *(p_esp-2) = entry;    // eip
+    // This is automatically pushed by us when an interrupt happens, see the
+    // isr stubs in arch/i386/boot/interrupt.S
+    *(p_esp-3) = 0;                   // err_code
+    *(p_esp-4) = 0;                   // int_no
+
+    p->registers.esp -= 16;
+    p->registers.ebp = p->registers.esp;
+
+    p->next = running_proc->next;
+    running_proc->next = p;
+
+    return 0;
+}
+
+void scheduler_init(void)
+{
+    // We set the kernel as the first process running
+    Process *p = find_free_process();
+    p->state = PROC_STATE_RUNNING;
+    p->pid = get_next_pid();
+    p->pgdir = paging_kernel_pgdir();
+    p->next = p;
+    running_proc = p;
+
     /*
-        This is called by the interrupt handler at every timer tick. The 
-        argument is a pointer to what is on the stack when the handler 
-        was called. When this function returns the handler will restore the 
-        stuff on the stack. We change what is on the stack so that instead of 
-        going back to what it was doing another process gets run
+        We don't need to set the registers, the first time a context 
+        switch will happen the current state of the registers will be 
+        saved. It would also be impossible to store the right initial values 
+        anyway...
     */
-    // Simple round robin scheduler
-    current_proc->state = PROC_STATE_READY;
-    int to_run = (1 + (current_proc - processes)) % MAX_PROCESSES;
-    for (int i = 0; i < MAX_PROCESSES; i++) {
-        if (processes[to_run].state == PROC_STATE_READY) {
-            // kprintf("cambio da proc %d a proc %d\n", (current_proc - processes), to_run);
-            copy_intframe2procstate(intframe, &current_proc->procState);
-            processes[to_run].state = PROC_STATE_RUNNING;
-            current_proc = &processes[to_run];
-            copy_procstate2intframe(&current_proc->procState, intframe);
-            paging_load(current_proc->pgdir);
-            return;
-        }
-        to_run = (to_run + 1) % MAX_PROCESSES;
+}
+
+void scheduler(struct intframe_t *frame)
+{
+    // Avoid all this if there is only 1 process running...
+    if (running_proc->next == running_proc) {
+        return;
     }
-    panic("nothing to execute in scheduler. did you kill the monitor?");
+
+    // Simple round robin, inefficient but works for now
+    Process *old = running_proc;
+    old->state = PROC_STATE_READY;
+    Process *new = running_proc->next;
+    new->state = PROC_STATE_RUNNING;
+
+    // Save the running process registers
+    old->registers.edi = frame->edi;
+    old->registers.esi = frame->esi;
+    old->registers.ebp = frame->ebp;
+    old->registers.ebx = frame->ebx;
+    old->registers.edx = frame->edx;
+    old->registers.ecx = frame->ecx;
+    old->registers.eax = frame->eax;
+    
+    old->registers.esp = frame->curresp;
+
+    // Restore the newly running process's ones
+    frame->edi = new->registers.edi;
+    frame->esi = new->registers.esi;
+    frame->ebp = new->registers.ebp;
+    frame->ebx = new->registers.ebx;
+    frame->edx = new->registers.edx;
+    frame->ecx = new->registers.ecx;
+    frame->eax = new->registers.eax;
+
+    frame->curresp = new->registers.esp;
+    
+    running_proc = new;
+    paging_load(new->pgdir);
 }

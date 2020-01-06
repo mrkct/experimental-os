@@ -29,7 +29,7 @@ struct gdt_ptr_struct
  __attribute__((packed));
 typedef struct gdt_ptr_struct gdt_ptr_t; 
 
-void init_gdt();
+void init_gdt(void);
 
 struct idt_entry_struct {
     uint16_t offset_low;
@@ -48,7 +48,7 @@ struct idt_desc_struct {
 
 typedef struct idt_desc_struct idt_desc_t;
 
-void init_idt();
+void init_idt(void);
 
 /*
     This struct represents the content of the stack when

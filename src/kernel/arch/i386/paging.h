@@ -6,12 +6,6 @@
 #include <stdint.h>
 #include <kernel/memory/memory.h>
 
-/*
-    TODO: Setting this to the full 4GB makes the boot insanely slow. But if we 
-    don't map the whole address space not all memory is available. Search for 
-    a fix
-*/
-#define ADDRESS_SPACE_SIZE  (256 * 1024 * 1024)
 
 #define PGSIZE          4096
 #define PGSHIFT         12

@@ -30,7 +30,7 @@ void dispatch_irq(struct intframe_t *intframe)
     switch (intframe->int_no) {
     case IRQ_TIMER:
         __timer_tick();
-        scheduler_tick(intframe);
+        scheduler(intframe);
         break;
     case IRQ_KEYBOARD:
         keyboard_irq(intframe);

@@ -37,6 +37,7 @@ _start:
    push %eax
    push %ebx
 
+   cli
 	# Prepare the terminal, so that we can write to debug easier
 	call kernel_setup
 

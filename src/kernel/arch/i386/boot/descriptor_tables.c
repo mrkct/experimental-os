@@ -61,30 +61,11 @@ extern void load_idt(uint32_t);
     %eip --> from now all this stuff is pushed by the CPU automatically
     %cs
     %eflags
-    %esp --> the esp that was being used when the interrupt happened
-    %ss
 
     All this stuff is represented by the intframe_t struct
 */
 
 static int count = 0;
-
-static long read_cr2() {
-    unsigned long val;
-    asm volatile ( "mov %%cr2, %0" : "=r"(val) );
-    return val;
-}
-
-static long read_cr3() {
-    unsigned long val;
-    asm volatile ( "mov %%cr3, %0" : "=r"(val) );
-    return val;
-}
-
-#include <kernel/process.h>
-
-extern Process processes[MAX_PROCESSES];
-extern Process *current_proc;
 
 void interrupt_handler(struct intframe_t *frameptr)
 {
@@ -96,29 +77,6 @@ void interrupt_handler(struct intframe_t *frameptr)
             frameptr->int_no, 
             frameptr->err_code
         );
-        kprintf("currently running process: %d\n", (current_proc - processes));
-        kprintf("--- Printing intframe ---\n");
-        kprintf("ds: %x\n", frameptr->ds);
-        kprintf("edi: %x \n", frameptr->edi);
-        kprintf("esi: %x \n", frameptr->esi);
-        kprintf("ebp: %x \n", frameptr->ebp);
-        kprintf("curresp: %x \n", frameptr->curresp);
-        kprintf("ebx: %x \n", frameptr->ebx);
-        kprintf("edx: %x \n", frameptr->edx);
-        kprintf("ecx: %x \n", frameptr->ecx);
-        kprintf("eax: %x \n", frameptr->eax);
-        kprintf("int_no: %x \n", frameptr->int_no);
-        kprintf("err_code: %x \n", frameptr->err_code);
-        kprintf("eip: %x \n", frameptr->eip);
-        kprintf("cs: %x \n", frameptr->cs);
-        kprintf("eflags: %x \n", frameptr->eflags);
-        kprintf("useresp: %x \n", frameptr->useresp);
-        kprintf("ss: %x \n", frameptr->ss);
-        if (frameptr->int_no == 14) {
-            kprintf("\tcr2: %x\n", read_cr2());
-            kprintf("\tcr3: %x\n\tkern_pgdir: %x\n", read_cr3(), paging_kernel_pgdir());
-            while (true) {}
-        }
     } else {
         dispatch_irq(frameptr);
         pic_ack(frameptr->int_no);
@@ -151,5 +109,5 @@ void init_idt()
 
     load_idt((uint32_t) &idt_desc);
     pic_init(IRQ_OFFSET);
-    asm("sti");
+    asm volatile("sti");
 }

@@ -49,7 +49,7 @@ static void kern_pgdir_create(void)
         struct PageInfo *page = page_alloc(1);
         kassert(page != NULL);
         paddr_t pa = pageindex2pa((paddr_t) (page - pages));
-        pgdir[i] = pa | PG_PRESENT | PG_USER;
+        pgdir[i] = pa | PG_PRESENT | PG_USER | PG_RW;
     }
 
     kern_pgdir = pgdir;
@@ -62,7 +62,7 @@ void paging_init(multiboot_info_t *mbh)
     pages = (struct PageInfo *) boot_alloc(sizeof(struct PageInfo) * npages);
     multiboot_detect_available_pages(mbh);
     kern_pgdir_create();
-    pgdir_map(kern_pgdir, 0, ADDRESS_SPACE_SIZE, 0, PG_PRESENT | PG_USER);
+    pgdir_map(kern_pgdir, 0, ROUNDUP(memory_get_total(), PGSIZE), 0, PG_PRESENT | PG_USER | PG_RW);
 }
 
 void paging_load(pdir_t pgdir)

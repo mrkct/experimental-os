@@ -19,6 +19,8 @@
 #define USER_STACK_BOTTOM   KERNEL_END
 #define USER_STACK_TOP      0x08010000
 
+#define PROCESS_KERNEL_STACK_SIZE   (64 * 1024)
+
 /*
     TODO: Change this into the memory address where the kernel ends in 
     memory. This will require adding a symbol 'end' to the linker script at 
