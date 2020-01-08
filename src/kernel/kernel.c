@@ -20,6 +20,7 @@
 #include <klibc/string.h>
 #include <kernel/filesystems/vfs.h>
 #include <kernel/filesystems/fat16/fat16vfs.h>
+#include <kernel/process.h>
 
 
 struct DiskInterface ramdisk_interface;
@@ -56,14 +57,6 @@ void kernel_setup(multiboot_info_t *header, unsigned int magic)
 
 void kernel_main(void) 
 {
-    char buff[64];
-    FileDesc fd = kfopen("/DOCS/README.TXT", "r");
-
-    int r = kfread(buff, 63, fd);
-    kfclose(fd);
-    buff[r] = '\0';
-    kprintf("%s", buff);
-
     #define BUFFER_SIZE 1024
     char buffer[BUFFER_SIZE];
     while (true) {
