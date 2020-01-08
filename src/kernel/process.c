@@ -33,14 +33,19 @@ static void region_alloc(pdir_t pgdir, vaddr_t vaddr, size_t count)
     }
 }
 
-static uint32_t load_elf(Process *process, char *binary) 
+
+static uint32_t load_elf(pdir_t pagedir, char *binary) 
 {
     ELFHeader *head = (ELFHeader *) binary;
+    if (head->magic != ELF_MAGIC) {
+        return 0;
+    }
+
     ELFProgHeader *prog = (ELFProgHeader *) (binary + head->progHeader);
     for (size_t i = 0; i < head->progEntries; i++) {
         if (prog[i].type == ELF_PROG_LOAD) {
             region_alloc(
-                process->pgdir, 
+                pagedir, 
                 prog[i].vAddr, 
                 prog[i].memSize
             );
@@ -67,7 +72,6 @@ static uint32_t load_elf(Process *process, char *binary)
 }
 
 
-
 Process processes[MAX_PROCESSES];
 Process *running_proc;
 
@@ -88,40 +92,39 @@ static Process *find_free_process(void)
     return NULL;
 }
 
-int process_start(char *binary)
+int process_create(char *name, uint32_t entryPoint, pdir_t pagedir)
 {
     Process *p = find_free_process();
-    kassert(p != NULL);
+    if (p == NULL) {
+        return -E_PROCESSLIMITREACHED;
+    }
+
+    p->name = kmalloc(strlen(name));
+    if (p->name == NULL) {
+        return -E_OUTOFMEMORY;
+    }
+    strcpy(p->name, name);
     p->state = PROC_STATE_READY;
-    p->pgdir = pgdir_create();
+    p->pgdir = pagedir;
     p->pid = get_next_pid();
 
     char *stack = (char *) kmalloc(PROCESS_KERNEL_STACK_SIZE);
+    if (stack == NULL) {
+        kfree(p->name);
+        return -E_OUTOFMEMORY;
+    }
+    kassert(stack < 128 * 1024 * 1024);
     p->registers.esp = (uint32_t) (stack + PROCESS_KERNEL_STACK_SIZE -1);
-    
-    /*
-        load_elf needs to write directly to the specific memory addresses 
-        where the programs wants to be put at. Before doing that it allocs 
-        the memory and maps it there. As such we load the process page dir 
-        so that page dir is changed instead of the current one. We restore 
-        the current one before going ahead though
-    */
-    pdir_t current_pgdir = (pdir_t) read_cr3();
-    paging_load(p->pgdir);
-    uint32_t entry = load_elf(p, binary);
-    paging_load(current_pgdir);
 
-    // We need to fake the stack as if the process has already been interrupted once
     uint32_t *p_esp = (uint32_t *) p->registers.esp;
-    // The data pushed by the cpu when an interrupt happens 
-    // (and popped by 'iret')
-    *p_esp = 0x206;               // eflags
-    *(p_esp-1) = 0x8;                 // cs
-    *(p_esp-2) = entry;    // eip
+    // The data pushed by the cpu when an interrupt happens (popped by 'iret')
+    *p_esp = 0x206;             // eflags
+    *(p_esp-1) = 0x8;           // cs
+    *(p_esp-2) = entryPoint;    // eip
     // This is automatically pushed by us when an interrupt happens, see the
     // isr stubs in arch/i386/boot/interrupt.S
-    *(p_esp-3) = 0;                   // err_code
-    *(p_esp-4) = 0;                   // int_no
+    *(p_esp-3) = 0;         // err_code
+    *(p_esp-4) = 0;         // int_no
 
     p->registers.esp -= 16;
     p->registers.ebp = p->registers.esp;
@@ -130,6 +133,34 @@ int process_start(char *binary)
     running_proc->next = p;
 
     return 0;
+}
+
+int execv(char *name, char *binary)
+{
+    /*
+        load_elf needs to write directly to the specific memory addresses 
+        where the programs wants to be put at. Before doing that it allocs 
+        the memory and maps it there. As such we load the process page dir 
+        so that page dir is changed instead of the current one. We restore 
+        the current one before going ahead though
+    */
+    pdir_t pagedir = pgdir_create();
+    pdir_t current_pagedir = (pdir_t) read_cr3();
+    paging_load(pagedir);
+    uint32_t entry = load_elf(pagedir, binary);
+    paging_load(current_pagedir);
+
+    if (entry == 0) {
+        // TODO: Destroy pagedir
+        return E_NOTELF;
+    }
+
+    int result = process_create(name, entry, pagedir);
+    if (result < 0) {
+        // TODO: Destroy pagedir
+    }
+
+    return result;
 }
 
 void scheduler_init(void)
@@ -186,5 +217,7 @@ void scheduler(struct intframe_t *frame)
     frame->curresp = new->registers.esp;
     
     running_proc = new;
-    paging_load(new->pgdir);
+    if (old->pgdir != new->pgdir) {
+        paging_load(new->pgdir);
+    }
 }

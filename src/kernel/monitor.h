@@ -17,5 +17,6 @@ int monitor_echo(int, char **);
 int monitor_ls(int, char **);
 int monitor_cat(int, char **);
 int monitor_run(int, char **);
+int monitor_ps(int argc, char **argv);
 
 #endif

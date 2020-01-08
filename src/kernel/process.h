@@ -15,6 +15,10 @@
 
 #define PROCESS_KERNEL_STACK_SIZE   (64 * 1024)
 
+#define E_PROCESSLIMITREACHED   1
+#define E_OUTOFMEMORY           2
+#define E_NOTELF                3
+
 /*
     This contains all the registers in x86 that we save each context switch. 
     Not all registers are included, this is because some of those are saved 
@@ -31,13 +35,50 @@ typedef struct Process {
     
     int pid;
     int state;
+    char *name;
     struct Process *next;
 } Process;
 
+/*
+    Call this BEFORE interrupts are initialised. Adds the kernel as the 
+    initial process to the process list. Do NOT call this more than once 
+    in the entire execution of the kernel
+*/
 void scheduler_init(void);
 
-int process_start(char *binary);
+/*
+    Creates a new process that will be scheduled to run next. 
+    @param name: The name of the process, this string will be copied so you 
+    can free it after use.
+    @param entryPoint: The entry point in memory where the program starts. 
+    This is a virtual address when the argument page directory is loaded
+    @param pagedir: The page directory that needs to be loaded when the 
+    process runs. This does NOT get copied, it is your responsability to not 
+    free it until the process is dead
+    @returns 0 on success, otherwise one of these:
+        1. E_OUTOFMEMORY: There is not enough memory to run the program
+        2. E_PROCESSLIMIT: The maximum amount of processes running has been 
+        reached. 
+*/
+int process_create(char *name, uint32_t entryPoint, pdir_t pagedir);
 
+/*
+    Starts a new process from a program stored on disk.
+    @param name: The name of the process.
+    @param binary: Where in memory the binary ELF image to load is stored
+    @returns 0 on success, otherwise one of these:
+        1. E_NOTELF: The file opened is not an ELF image
+        2. E_OUTOFMEMORY: There is not enough memory to run the program
+        3. E_PROCESSLIMIT: The maximum amount of processes running has been 
+        reached. 
+*/
+int execv(char *name, char *binary);
+
+/*
+    Do NOT call this function outside the interrupt handler. This executes one 
+    step of the scheduler, this might cause a context switch. This only works 
+    if called from an interrupt handler, otherwise it might corrupt your stack
+*/
 void scheduler(struct intframe_t *frame);
 
 #endif

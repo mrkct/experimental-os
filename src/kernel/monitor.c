@@ -5,10 +5,12 @@
 #include <kernel/devices/timer/timer.h>
 #include <kernel/filesystems/vfs.h>
 #include <kernel/lib/kprintf.h>
+#include <kernel/lib/kassert.h>
 #include <kernel/memory/memory.h>
 #include <kernel/monitor.h>
 #include <klibc/string.h>
 #include <kernel/memory/kheap.h>
+#include <kernel/process.h>
 
 
 // TODO: Avoid fixed max size arguments
@@ -23,7 +25,8 @@ struct MonitorCommand commands[] = {
     {"echo", "Writes all the argument again", monitor_echo},
     {"ls", "Lists the content of a directory", monitor_ls},
     {"cat", "Prints the content of a file", monitor_cat},
-    {"run", "Runs a program", monitor_run}
+    {"run", "Runs a program", monitor_run},
+    {"ps", "Shows all the currently running processes in order of execution", monitor_ps}
 };
 
 /*
@@ -166,25 +169,35 @@ int monitor_cat(int argc, char **args)
     return 0;
 }
 
-#include <kernel/process.h>
-
 int monitor_run(int argc, char **argv)
 {
-    if (argc < 2) {
-        kprintf("you need to pass a program to load\n");
-        return -1;
+    for (int i = 1; i < argc; i++) {
+        FileDesc fd = kfopen(argv[i], "r");
+        if (fd == NULL) {
+            kprintf("could not open %s", argv[i]);
+            continue;
+        }
+        char *binary = (char *) kmalloc(fd->filesize);
+        kassert(fd->filesize == kfread(binary, fd->filesize, fd));
+        if (execv(argv[i], binary)) {
+            kprintf("an error happened while opening %s\n", argv[i]);
+        }
     }
-    char *binary = (char *) kmalloc(1024);
-    FileDesc file = kfopen(argv[1], "r");
-    if (file == NULL) {
-        kprintf("could not open %s\n", argv[1]);
-        return -2;
-    }
-    int read = kfread(binary, 1024, file);
-    kprintf("opening %s (%d bytes)\n", argv[1], read);
-    kfclose(file);
 
-    process_create(binary);
+    return 0;
+}
+
+extern Process *running_proc;
+
+int monitor_ps(int argc, char **argv)
+{
+    kprintf("Running processes: \n");
+    kprintf("%d: %s (running)\n", running_proc->pid, running_proc->name);
+    Process *p = running_proc->next;
+    while (p != running_proc) {
+        kprintf("%d: %s\n", p->pid, p->name);
+        p = p->next;
+    }
 
     return 0;
 }
