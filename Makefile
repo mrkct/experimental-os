@@ -25,6 +25,7 @@ CSOURCES = \
 	src/kernel/filesystems/fat16/fat16.c \
 	src/kernel/filesystems/fat16/fat16vfs.c \
 	src/kernel/kernel.c \
+	src/kernel/init.c \
 	src/kernel/lib/kprintf.c \
 	src/kernel/lib/read_string.c \
 	src/kernel/memory/memory.c \
