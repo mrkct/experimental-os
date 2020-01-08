@@ -78,7 +78,7 @@ run-gdb: kernel.bin
 
 run-iso: build-iso
 	# qemu-system-i386 -cdrom "$(OS_NAME).iso" -no-shutdown
-	qemu-system-i386 -cdrom "Experimental OS.iso" -monitor telnet::45454,server,nowait -no-shutdown
+	qemu-system-i386 -cdrom "Experimental OS.iso" -no-shutdown -d guest_errors
 
 ./src/kernel/arch/i386/boot/boot.o: config
 	@$(AS) src/kernel/arch/i386/boot/boot.S -o $(OUTF)/src/kernel/arch/i386/boot/boot.o $(AS_FLAGS) -I src/kernel/arch/i386/boot/
