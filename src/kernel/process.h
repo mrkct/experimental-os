@@ -63,6 +63,20 @@ void scheduler_init(void);
 int process_create(char *name, uint32_t entryPoint, pdir_t pagedir);
 
 /*
+    Sets the process state as dead. This means this process will not be 
+    scheduled again. Even though the process' resources will be freed this 
+    will probably not happen instantly
+*/
+void process_set_dead(Process *proc);
+
+/*
+    Returns the currently running process. Note that this changes with time, 
+    so it might not be valid for all the time you need. Be sure to be in code 
+    that cannot be context switched
+*/
+Process *get_running_process(void);
+
+/*
     Starts a new process from a program stored on disk.
     @param name: The name of the process.
     @param binary: Where in memory the binary ELF image to load is stored

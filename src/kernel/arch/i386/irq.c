@@ -10,23 +10,17 @@
 #include <kernel/devices/ps2kb/keyboard.h>
 #include <kernel/lib/kprintf.h>
 #include <kernel/process.h>
+#include <kernel/syscall.h>
 
 
-void keyboard_irq(__attribute__((unused)) struct intframe_t *intframe)
+static void keyboard_irq(__attribute__((unused)) struct intframe_t *intframe)
 {
     unsigned char byte = inb(0x60);
     kbd_handle_byte(byte);
 }
 
-
-
 void dispatch_irq(struct intframe_t *intframe)
-{
-    pdir_t pdir = paging_kernel_pgdir();
-    if (pdir != 0) {
-        paging_load(pdir);
-    }
-    
+{   
     switch (intframe->int_no) {
     case IRQ_TIMER:
         __timer_tick();
@@ -34,6 +28,17 @@ void dispatch_irq(struct intframe_t *intframe)
         break;
     case IRQ_KEYBOARD:
         keyboard_irq(intframe);
+        break;
+    case IRQ_SYSCALL:
+        intframe->eax = syscall(
+            intframe->eax, 
+            intframe->ebx, 
+            intframe->ecx, 
+            intframe->edx, 
+            intframe->esi, 
+            intframe->edi
+        );
+        scheduler(intframe);
         break;
     default:
         kprintf("Unknown IRQ(%d - %d)\n", intframe->int_no, intframe->err_code);

@@ -33,7 +33,12 @@ static void region_alloc(pdir_t pgdir, vaddr_t vaddr, size_t count)
     }
 }
 
-
+/*
+    Loads an ELF file, allocating and mapping memory in the argument page 
+    directory. 
+    Returns the entry point of the program on success, 0 if the file is not an 
+    ELF file
+*/
 static uint32_t load_elf(pdir_t pagedir, char *binary) 
 {
     ELFHeader *head = (ELFHeader *) binary;
@@ -85,6 +90,7 @@ static Process *find_free_process(void)
 {
     for (int i = 0; i < MAX_PROCESSES; i++) {
         if (processes[i].state == PROC_STATE_UNUSED) {
+            processes[i].state = PROC_STATE_UNUSED;
             return &processes[i];
         }
     }
@@ -135,6 +141,30 @@ int process_create(char *name, uint32_t entryPoint, pdir_t pagedir)
     return 0;
 }
 
+void process_set_dead(Process *proc)
+{
+    proc->state = PROC_STATE_DEAD;
+}
+
+Process *get_running_process(void)
+{
+    return running_proc;
+}
+
+/*
+    Frees a process resources. This function should not be called unless you 
+    are sure the process is not in the free list and it is not being executed. 
+    If you are looking for how to kill a process see 'process_set_dead'
+*/
+static void process_free(Process *proc)
+{
+    proc->state = PROC_STATE_UNUSED;
+    // TODO: Free the memory used by the code, stack & heap
+    // if (proc->pgdir != paging_kernel_pgdir()) {
+    //     pgdir_free(proc->pgdir);
+    // }
+}
+
 int execv(char *name, char *binary)
 {
     /*
@@ -171,6 +201,7 @@ void scheduler_init(void)
     p->pid = get_next_pid();
     p->pgdir = paging_kernel_pgdir();
     p->next = p;
+    p->name = "Monitor";
     running_proc = p;
 
     /*
@@ -181,6 +212,7 @@ void scheduler_init(void)
     */
 }
 
+
 void scheduler(struct intframe_t *frame)
 {
     // Avoid all this if there is only 1 process running...
@@ -190,8 +222,18 @@ void scheduler(struct intframe_t *frame)
 
     // Simple round robin, inefficient but works for now
     Process *old = running_proc;
-    old->state = PROC_STATE_READY;
-    Process *new = running_proc->next;
+    Process *new = old->next;
+    while (new->state == PROC_STATE_DEAD) {
+        Process *new_next = new->next;
+        process_free(new);
+        new = new_next;
+    }
+
+    old->next = new;
+    // The process might be dead, without this check we would revive it
+    if (old->state == PROC_STATE_RUNNING) {
+        old->state = PROC_STATE_READY;
+    }
     new->state = PROC_STATE_RUNNING;
 
     // Save the running process registers
