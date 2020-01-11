@@ -9,6 +9,7 @@
 #define IRQ_OFFSET 32
 #define IRQ_TIMER       (IRQ_OFFSET + 0)
 #define IRQ_KEYBOARD    (IRQ_OFFSET + 1)
+#define IRQ_SYSCALL     (0x80)
 
 
 static inline const char *get_exception_message(uint32_t code)
@@ -43,6 +44,8 @@ static inline const char *get_exception_message(uint32_t code)
     };
     if (code < 26) {
         return messages[code];
+    } else if (code == IRQ_SYSCALL) {
+        return "System Call";
     } else {
         return "Unknown Interrupt";
     }
