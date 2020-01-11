@@ -2,6 +2,7 @@
 /out
 /isodir
 /disk
+/dumps
 src/ramdisk/ramdisk.initrd
 *.o
 *.bin
