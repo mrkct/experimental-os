@@ -1,4 +1,0 @@
-PROGRAMS = \
-	hello
-
-build:
