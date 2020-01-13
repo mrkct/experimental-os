@@ -9,6 +9,10 @@ To run with qemu just run
 
     qemu-system-i386 -cdrom 'Experimental OS.iso'
 
+If everything went right you should see a console where you can type. Remember the layout is the US one. 
+To start try typing `help`. Also since relative paths are not (yet) implemented you need to write each 
+path from the root, for example `ls /disk`
+
 ## How to run
 Prepare a cross-compiler for i686-elf. See [here](https://wiki.osdev.org/GCC_Cross-Compiler) if you don't know how.  
 Add to your enviroments variables
@@ -31,12 +35,14 @@ ramdisk for now, running `make run` won't load the disk. Use `make run-iso` inst
 If you need to add another source file to the codebase you can just edit the Makefile and add the path to the new 
 source code to the CSOURCES variable. 
 
-You will also need a fat 16 disk image that will act as a disk in ram. Create one and put it in `src/ramdisk/ramdisk.initrd`. It will be automatically included in the iso by make. 
+You will also need a FAT 16 disk image that will act as a disk in ram. Create one and put it in `src/ramdisk/ramdisk.initrd`. It will be automatically included in the iso by make. 
 
 ## Notes
 
-This is NOT a higher-half kernel: the kernel is mapped in the lower 128MB, programs are expected to load 
-after that.
+- This is NOT a higher-half kernel: the kernel is mapped in the lower 128MB, programs are expected to load 
+after that
+- Programs are to be statically linked: there is no support for dynamic linking in the ELF loader
+
 
 ## Done stuff
 - Setups a GDT & IDT
@@ -44,9 +50,27 @@ after that.
 - Clock & PS2 Keyboard drivers with the PIC 8259
 - Paging, even though it's only a simple identity mapping
 - Dynamic memory allocator (kernel only)
-- FAT16 file system with a virtual file system layer
+- Read only FAT16 file system with a virtual file system layer
     - Note that this works from a ramdisk for now
 
-## Todo
-- An IDE disk driver
-- Able to load & run programs
+## In the future...
+- A real memory allocator
+- Long file names support for FAT16
+- An ATA disk driver
+- Some sort of stdin/stdout for each program
+- Reading datetime from CMOS
+- Relative pathnames
+- More syscalls for stuff such as: reading keyboard input, file IO, allocating memory ...
+- A graphical interface
+- A driver for the mouse 
+
+## Bugs/FixMes
+### Keyboard related
+- Not all keyboard keys are mapped
+- Sometimes random keyboard events are incorrectly mapped as ENTER presses
+- Keyboard modifiers are not implemented
+### Multitasking related
+- The program stacks need to be allocated in the low 120MB, but right now we just allocate 
+and hope it allocates there. This always works on machines with 128MB or less
+- When a process ends we don't actually free it's memory
+### 
