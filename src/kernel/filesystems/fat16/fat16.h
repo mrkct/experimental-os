@@ -11,6 +11,9 @@
 #define FAT_BOOTCODE_LENGTH 448
 #define FAT_FILENAME_LENGTH 11
 
+// This is the maximum filename length with long file names
+#define FAT_MAX_FILENAME_LENGTH 255
+
 #define FAT_ATTR_READONLY   0x01
 #define FAT_ATTR_HIDDEN     0x02
 #define FAT_ATTR_SYSTEM     0x04
@@ -19,13 +22,15 @@
 #define FAT_ATTR_ARCHIVE    0x20
 #define FAT_ATTR_LFN        0x0F
 
-#define FAT16_GET_HOURS(x) (x >> 11)
-#define FAT16_GET_MINUTES(x) (x >> 5 & 0x7f)
-#define FAT16_GET_SECONDS(x) (2 * (x & 0x1f))
+#define FAT_LFN_GET_ORDER(x) ((x) & 0x0f)
 
-#define FAT16_GET_YEAR(x) (1980 + (x >> 9))
-#define FAT16_GET_MONTH(x) (x >> 5 & 0x0f)
-#define FAT16_GET_DAY(x) (x & 0x1f)
+#define FAT16_GET_HOURS(x) ((x) >> 11)
+#define FAT16_GET_MINUTES(x) ((x) >> 5 & 0x7f)
+#define FAT16_GET_SECONDS(x) (2 * ((x) & 0x1f))
+
+#define FAT16_GET_YEAR(x) (1980 + ((x) >> 9))
+#define FAT16_GET_MONTH(x) ((x) >> 5 & 0x0f)
+#define FAT16_GET_DAY(x) ((x) & 0x1f)
 
 /*
     These are data structures saved on disk
@@ -85,7 +90,9 @@ struct FAT16LongFileName {
     unsigned char filename2[12];
     uint16_t zero;
     unsigned char filename3[4];
-};
+} __attribute__((packed));
+
+typedef struct FAT16LongFileName FAT16LongFileName;
 
 typedef uint16_t FATEntry;
 
@@ -127,7 +134,7 @@ int fat16_read_cluster(int cluster, char *buffer);
 int fat16_open_support(const char *path, int length, FAT16DirEntry *entry);
 
 int fat16_read_filesystem(struct DiskInterface *diskinterface);
-int fat16_ls(int *offset, FAT16DirEntry *out);
+int fat16_ls(int *offset, FAT16DirEntry *out, char *filename);
 int fat16_open(const char *path, FAT16DirEntry *entry);
 int fat16_fopen(const char *path, char mode, struct FAT16FileHandle *handle);
 int fat16_fread(struct FAT16FileHandle *handle, int count, char *buffer);

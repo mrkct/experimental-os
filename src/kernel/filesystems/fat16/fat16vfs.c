@@ -100,16 +100,16 @@ int fat16vfs_listdir(Dir *dir, DirEntry *entry)
 {
     int offset = (int) dir->fs_defined;
     FAT16DirEntry fatentry;
-    int result = fat16_ls(&offset, &fatentry);
+    int result = fat16_ls(&offset, &fatentry, entry->name);
     if (result == 0)
         return 0;
-    fat16_get_formatted_filename(fatentry.filename, entry->name);
-    entry->name[12] = '\0';
+
     if (fatentry.attributes & FAT_ATTR_DIRECTORY) {
         entry->type = DIRECTORY;
     } else {
         entry->type = FILE;
     }
+
     entry->creation = (struct DateTime) {
         .hour = FAT16_GET_HOURS(fatentry.creationTime),
         .minute = FAT16_GET_MINUTES(fatentry.creationTime),

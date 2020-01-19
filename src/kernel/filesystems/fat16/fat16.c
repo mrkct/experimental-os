@@ -5,8 +5,8 @@
 #include <kernel/lib/kassert.h>
 #include <klibc/string.h>
 #include <klibc/ctype.h>
+#include <kernel/filesystems/vfs.h>
 #include <kernel/filesystems/fat16/fat16.h>
-
 
 
 static FAT16FileSystem fs;
@@ -24,6 +24,10 @@ int fat16_is_entry_end(FAT16DirEntry *entry) {
 
 int fat16_is_entry_unused(FAT16DirEntry *entry) {
     return *((unsigned char *) entry) == 0xe5;
+}
+
+int fat16_is_entry_lfn(FAT16DirEntry *entry) {
+    return entry->attributes == FAT_ATTR_LFN;
 }
 
 /*
@@ -72,31 +76,13 @@ int fat16_get_next_cluster(int cluster) {
     return fs.fat[cluster];
 }
 
-int fat16_filenamecmp(unsigned char *a, unsigned char *b) {
-    char buffer1[FAT_FILENAME_LENGTH+1];
-    char buffer2[FAT_FILENAME_LENGTH+1];
-    
+int fat16_strcmp(unsigned char *a, unsigned char *b) {
     int i = 0;
-    int j = 0;
-    while (i < FAT_FILENAME_LENGTH) {
-        if (a[i] != ' ' && a[i] != '.') {
-            buffer1[j++] = toupper(a[i]);
-        }
+    while (a[i] != '\0' && b[i] != '\0' && toupper(a[i]) == toupper(b[i])) {
         i++;
     }
-    buffer1[j] = '\0';
-
-    i = 0;
-    j = 0;
-    while (i < FAT_FILENAME_LENGTH) {
-        if (b[i] != ' ' && b[i] != '.') {
-            buffer2[j++] = toupper(b[i]);
-        }
-        i++;
-    }
-    buffer2[j] = '\0';
     
-    return strcmp(buffer1, buffer2);
+    return toupper(a[i]) - toupper(b[i]);
 }
 
 /*
@@ -141,24 +127,49 @@ int fat16_read_filesystem(struct DiskInterface *diskinterface)
     @param offset: The offset in the disk, in bytes, where a list of folder 
     entries starts. This will be changed to point to the next entry in the 
     folder
-    @param out: A FAT16DirEntry struct where the read entry will be put
+    @param out: A File struct where the read entry will be put
+    @param filename: A string where the filename will be written. This is 
+    expected to be at least 255 characters long and it will be zero terminated
 
     Returns 1 when there might be more entries in the folder, 0 when there are 
     no more. The out param will contain a new entry when the function returns 1
 
     An example for reading an entire folder can be
 
-    FAT16DirEntry current_entry;
+    File file;
+    char filename[255];
     int off = ROOT_DIR_OFFSET;
-    while (fat16_ls(&off, &current_entry)) {
-        // Do something with current_entry
+    while (fat16_ls(&off, &file, filename)) {
+        // Do something with file
     }
 */
-int fat16_ls(int *offset, FAT16DirEntry *out)
+int fat16_ls(int *offset, FAT16DirEntry *out, char *filename)
 {
-    FAT16DirEntry entry;
+    FAT16DirEntry entry = (FAT16DirEntry) {0};
+
     kassert(0 == disk->read_bytes(*offset, sizeof(FAT16DirEntry), (char *) &entry));
-    while (fat16_is_entry_unused(&entry) && !fat16_is_entry_end(&entry)) {
+    bool used_lfn = false;
+    while ( (fat16_is_entry_unused(&entry) && !fat16_is_entry_end(&entry)) || fat16_is_entry_lfn(&entry)) {
+        if (filename != NULL && fat16_is_entry_lfn(&entry)) {
+            used_lfn = true;
+            /*
+                In a long file name entry the actual name is split in 3 parts 
+                in the structure. Each part is made of 2 bytes character but 
+                only the first character is used. The string is 0 terminated 
+                and the rest is filled with 0xff
+            */
+            FAT16LongFileName *lfn = (FAT16LongFileName *) &entry;
+            int filename_offset = (10 + 12 + 4)/2 * (FAT_LFN_GET_ORDER(lfn->order)-1);
+            for (int i = 0; i < 10; i += 2) {
+                filename[filename_offset++] = lfn->filename1[i];
+            }
+            for (int i = 0; i < 12; i += 2) {
+                filename[filename_offset++] = lfn->filename2[i];
+            }
+            for (int i = 0; i < 4; i += 2) {
+                filename[filename_offset++] = lfn->filename3[i];
+            }
+        }
         *offset += sizeof(FAT16DirEntry);
         kassert(0 == disk->read_bytes(*offset, sizeof(FAT16DirEntry), (char *) &entry));
     }
@@ -168,14 +179,18 @@ int fat16_ls(int *offset, FAT16DirEntry *out)
     } else {
         *offset += sizeof(FAT16DirEntry);
         *out = entry;
+        if (!used_lfn) {
+            fat16_get_formatted_filename(entry.filename, filename);
+        }
+
         return 1;
     }
 }
 
 /*
     Finds the entry with the given name and returns it in the 'out' argument. 
-    @param name: The name of the entry to search for. Only up to 11 characters 
-    will be used for the comparison (this is due to limitations of FAT16)
+    @param name: The name of the entry to search for. Note that the name of 
+    the entries are not case-sensitive ("Hello", "HELLO", "hElLo" are the same)
     @param diroffset: The offset in the disk of the directory in which to find 
     the entry
     @param out: Where, if an entry is found, the entry will be stored
@@ -183,8 +198,9 @@ int fat16_ls(int *offset, FAT16DirEntry *out)
 */
 int fat16_findentry(unsigned char *name, int diroffset) {
     FAT16DirEntry entry;
-    while(fat16_ls(&diroffset, &entry)) {
-        if (fat16_filenamecmp(entry.filename, name) == 0) {
+    char filename[FAT_MAX_FILENAME_LENGTH + 1];
+    while(fat16_ls(&diroffset, &entry, filename)) {
+        if (fat16_strcmp(filename, name) == 0) {
             return diroffset - sizeof(FAT16DirEntry);
         }
     }
@@ -212,7 +228,9 @@ int fat16_open_support(const char *path, int length, FAT16DirEntry *entry) {
     int diroff = fat16_open_support(path, last_slash, entry);
     // Directory was not found
     if (diroff < 0)     return -1;
-    unsigned char dirname[12];
+
+    // Extracts the path of the parent folder
+    unsigned char dirname[FAT_MAX_FILENAME_LENGTH];
     int dirname_length = length - (last_slash+1);
     memcpy(dirname, &path[last_slash+1], dirname_length);
     dirname[dirname_length] = '\0';

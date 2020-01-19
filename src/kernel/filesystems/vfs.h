@@ -2,7 +2,7 @@
 #define VFS_H
 
 #define VFS_FS_NAME_LEN 16
-#define VFS_NAME_LEN 32
+#define VFS_NAME_LEN 255
 
 typedef struct DateTime {
     int year, month, day;
