@@ -118,6 +118,7 @@ void kbd_handle_byte(unsigned char byte)
             escape_code = false;
             return;
         }
+        escape_code = false;
         kbd_handle_scancode((SCANCODE_ESCAPECODE << 8) || byte);
         return;
     }
