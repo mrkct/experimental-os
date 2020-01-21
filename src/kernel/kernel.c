@@ -4,8 +4,6 @@
 #include <kernel/lib/kprintf.h>
 #include <kernel/lib/read_string.h>
 #include <kernel/monitor.h>
-#include <kernel/filesystems/vfs.h>
-#include <klibc/string.h>
 
 
 void kernel_main(void) 
