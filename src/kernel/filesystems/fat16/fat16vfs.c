@@ -111,17 +111,17 @@ int fat16vfs_listdir(Dir *dir, DirEntry *entry)
     }
 
     entry->creation = (struct DateTime) {
-        .hour = FAT16_GET_HOURS(fatentry.creationTime),
-        .minute = FAT16_GET_MINUTES(fatentry.creationTime),
-        .second = FAT16_GET_SECONDS(fatentry.creationTime),
+        .hours = FAT16_GET_HOURS(fatentry.creationTime),
+        .minutes = FAT16_GET_MINUTES(fatentry.creationTime),
+        .seconds = FAT16_GET_SECONDS(fatentry.creationTime),
         .year = FAT16_GET_YEAR(fatentry.creationDate),
         .month = FAT16_GET_MONTH(fatentry.creationDate),
         .day = FAT16_GET_DAY(fatentry.creationDate)
     };
     entry->lastUpdate = (struct DateTime) {
-        .hour = FAT16_GET_HOURS(fatentry.lastModTime),
-        .minute = FAT16_GET_MINUTES(fatentry.lastModTime),
-        .second = FAT16_GET_SECONDS(fatentry.lastModTime),
+        .hours = FAT16_GET_HOURS(fatentry.lastModTime),
+        .minutes = FAT16_GET_MINUTES(fatentry.lastModTime),
+        .seconds = FAT16_GET_SECONDS(fatentry.lastModTime),
         .year = FAT16_GET_YEAR(fatentry.lastModDate),
         .month = FAT16_GET_MONTH(fatentry.lastModDate),
         .day = FAT16_GET_DAY(fatentry.lastModDate)

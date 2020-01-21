@@ -1,13 +1,10 @@
 #ifndef VFS_H
 #define VFS_H
 
+#include <kernel/lib/time.h>
+
 #define VFS_FS_NAME_LEN 16
 #define VFS_NAME_LEN 255
-
-typedef struct DateTime {
-    int year, month, day;
-    int hour, minute, second;
-} DateTime;
 
 typedef struct File {
     unsigned char name[VFS_NAME_LEN+1];
@@ -28,8 +25,8 @@ enum DirEntryType {
 typedef struct DirEntry {
     unsigned char name[VFS_NAME_LEN+1];
     enum DirEntryType type;
-    DateTime creation;
-    DateTime lastUpdate;
+    struct DateTime creation;
+    struct DateTime lastUpdate;
     void *fs_defined;
 } DirEntry;
 
