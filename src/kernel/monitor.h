@@ -18,5 +18,6 @@ int monitor_ls(int, char **);
 int monitor_cat(int, char **);
 int monitor_run(int, char **);
 int monitor_ps(int argc, char **argv);
+int monitor_date(int, char **);
 
 #endif

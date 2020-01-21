@@ -11,6 +11,7 @@
 #include <klibc/string.h>
 #include <kernel/memory/kheap.h>
 #include <kernel/process.h>
+#include <kernel/lib/time.h>
 
 
 // TODO: Avoid fixed max size arguments
@@ -26,7 +27,8 @@ struct MonitorCommand commands[] = {
     {"ls", "Lists the content of a directory", monitor_ls},
     {"cat", "Prints the content of a file", monitor_cat},
     {"run", "Runs a program", monitor_run},
-    {"ps", "Shows all the currently running processes in order of execution", monitor_ps}
+    {"ps", "Shows all the currently running processes in order of execution", monitor_ps}, 
+    {"date", "Shows the current date and time", monitor_date}
 };
 
 /*
@@ -198,6 +200,28 @@ int monitor_ps(int argc, char **argv)
         kprintf("%d: %s\n", p->pid, p->name);
         p = p->next;
     }
+
+    return 0;
+}
+
+int monitor_date(int argc, char **argv)
+{
+    struct DateTime dt;
+    get_datetime(&dt);
+    static const char *month_names[] = {
+        "jan", "feb", "mar", "apr", 
+        "may", "jun", "jul", "aug", 
+        "sep", "oct", "nov", "dec"
+    };
+    kprintf(
+        "%d %s %d, %d.%d.%d, GMT+0\n", 
+        dt.day, 
+        month_names[dt.month-1], 
+        dt.year, 
+        dt.hours, 
+        dt.minutes, 
+        dt.seconds
+    );
 
     return 0;
 }
