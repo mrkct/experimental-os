@@ -17,6 +17,7 @@ CSOURCES = \
 	src/kernel/arch/i386/irq.c \
 	src/kernel/arch/i386/paging.c \
 	src/kernel/arch/i386/pic.c \
+	src/kernel/arch/i386/cmos.c \
 	src/kernel/devices/ps2kb/keyboard.c \
 	src/kernel/devices/timer/timer.c \
 	src/kernel/devices/tty/tty.c \
@@ -29,6 +30,7 @@ CSOURCES = \
 	src/kernel/syscall.c \
 	src/kernel/lib/kprintf.c \
 	src/kernel/lib/read_string.c \
+	src/kernel/lib/time.c \
 	src/kernel/memory/memory.c \
 	src/kernel/memory/kheap.c \
 	src/kernel/monitor.c \
