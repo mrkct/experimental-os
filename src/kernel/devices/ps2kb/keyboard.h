@@ -21,7 +21,9 @@
 
 #define KEYCODE_SHIFT       0x2a
 #define KEYCODE_CAPSLOCK    0x3a
-
+#define KEYCODE_SHIFTR      0x36
+#define KEYCODE_CTRL        0x1d
+#define KEYCODE_ALT         0x38
 
 typedef uint64_t Scancode;
 typedef uint8_t KeyCode;

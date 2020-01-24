@@ -21,11 +21,11 @@ void kernel_main(void)
                 driver the ctrl flag might contain random data. This could 
                 trigger this event if the user is unlucky while pressing 'c'. 
                 For now we comment this
-
+            */
             case -2:
                 kprintf("\nCTRL-C\n");
                 break;
-            */
+            
             default:
                 if (!monitor_handle(buffer))
                     kprintf("No commands with that name\n");

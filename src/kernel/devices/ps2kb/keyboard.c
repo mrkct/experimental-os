@@ -139,14 +139,12 @@ void kbd_handle_scancode(Scancode scancode)
     // TODO:
     action.modifiers.capslock   = caps_lock_status;
     action.modifiers.shift      = keymap_status[KEYCODE_SHIFT];
-    /*
     action.modifiers.shiftr     = keymap_status[KEYCODE_SHIFTR];
-    
     action.modifiers.alt        = keymap_status[KEYCODE_ALT];
-    action.modifiers.altgr      = keymap_status[KEYCODE_ALTGR];
+    // action.modifiers.altgr      = keymap_status[KEYCODE_ALTGR];
     action.modifiers.ctrl       = keymap_status[KEYCODE_CTRL];
-    action.modifiers.ctrlr      = keymap_status[KEYCODE_CTRLR];
-    */
+    // action.modifiers.ctrlr      = keymap_status[KEYCODE_CTRLR];
+    
     if (keycode == KEYCODE_CAPSLOCK && action.pressed) {
         caps_lock_status = !caps_lock_status;
     }
