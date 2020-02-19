@@ -22,6 +22,7 @@ CSOURCES = \
 	src/kernel/devices/timer/timer.c \
 	src/kernel/devices/tty/tty.c \
 	src/kernel/devices/ramdisk/ramdisk.c \
+	src/kernel/devices/ide/ide.c \
 	src/kernel/filesystems/vfs.c \
 	src/kernel/filesystems/fat16/fat16.c \
 	src/kernel/filesystems/fat16/fat16vfs.c \
@@ -82,7 +83,11 @@ run-gdb: kernel.bin
 
 run-iso: build-iso
 	# qemu-system-i386 -cdrom "$(OS_NAME).iso" -no-shutdown
-	qemu-system-i386 -cdrom "Experimental OS.iso" -no-shutdown -d guest_errors
+	qemu-system-i386 -cdrom "Experimental OS.iso" -hda isodir/boot/ramdisk.initrd -boot d -no-shutdown -d guest_errors
+
+run-disk: build-iso
+	qemu-system-i386 -cdrom "Experimental OS.iso" -drive file=isodir/boot/ramdisk.initrd,if=ide -boot d -no-shutdown -d guest_errors
+
 
 ./src/kernel/arch/i386/boot/boot.o: config
 	@$(AS) src/kernel/arch/i386/boot/boot.S -o $(OUTF)/src/kernel/arch/i386/boot/boot.o $(AS_FLAGS) -I src/kernel/arch/i386/boot/

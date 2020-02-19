@@ -29,6 +29,10 @@ void dispatch_irq(struct intframe_t *intframe)
     case IRQ_KEYBOARD:
         keyboard_irq(intframe);
         break;
+    case IRQ_ATA_PRIMARY:
+    case IRQ_ATA_SECONDARY:
+        // TODO: Handle these 2 interrupts
+        break;
     case IRQ_SYSCALL:
         intframe->eax = syscall(
             intframe->eax, 

@@ -19,6 +19,15 @@ static inline uint8_t inb(uint16_t port)
     return ret;
 }
 
+static inline uint16_t inw(uint16_t port)
+{
+    uint16_t ret;
+    asm volatile ( "inw %1, %0"
+                   : "=a"(ret)
+                   : "Nd"(port) );
+    return ret;
+}
+
 static inline unsigned long read_cr0(void)
 {
     unsigned long val;
