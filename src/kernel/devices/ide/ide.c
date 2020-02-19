@@ -22,11 +22,12 @@ static int ide_wait_for_status(int status, int timeout)
 {
     int ret;
 
-    uint32_t time = timer_get_ticks();
+    long time = timer_get_ticks();
 
     do {
         ret = inb(IDE_PORT_COMMAND_STATUS);
-        if (timer_get_ticks() - time > timeout)
+        long passed_time = timer_get_ticks() - time;
+        if (passed_time > timeout)
             return IDE_STATUS_TIMEOUT;
     } while ((ret & (IDE_STATUS_BUSY | status)) != status);
 
