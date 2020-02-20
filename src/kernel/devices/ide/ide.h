@@ -9,6 +9,11 @@
 #define IDE_SECTOR_SIZE     512
 #define IDE_READSTATUS_TIMEOUT  200
 
+/*
+    Parts of this code is copied/adapted from the Protura OS
+    https://github.com/mkilgore/protura
+*/
+
 enum {
     IDE_IRQ = 14,
 
@@ -110,6 +115,30 @@ struct ide_identify_format {
     uint16_t reserved70; /* reserved (word 70) */
 } __attribute__((packed));
 
+/*
+    Sends an IDENTIFY command to the master IDE device and writes its response 
+    to the argument structure.
+    Returns 0 if the device responded with success and valid data was written, 
+    -1 if the device returned a drive fault error or it timed out responding.
+*/
 int ide_identify_master(struct ide_identify_format *);
+
+/*
+    Reads a single sector in the buffer. If 'slave' is true then the sector 
+    will be read from the slave device, otherwise from the master.
+    This is blocking since it uses PIO read
+    Returns 0 on success, -1 otherwise
+*/
+int ide_readsect(int sector, bool slave, uint16_t *buffer);
+
+/*
+    This function is only used to test if readsect works correctly. 
+    This is only to be used with a disk created with the 'createdisk' utility 
+    in the '/tools' folder. 
+    A disk created with the 'createdisk' too has each sector filled with the 
+    same byte, each sector has a consecutive different byte. This functions tests 
+    for that 
+*/
+void __ide_test_readsect(int sectors_to_test);
 
 #endif

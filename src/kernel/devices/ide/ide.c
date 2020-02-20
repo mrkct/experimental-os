@@ -6,7 +6,10 @@
 #include <kernel/arch/i386/x86.h>
 #include <kernel/memory/kheap.h>
 #include <kernel/devices/ide/ide.h>
+#include <klibc/string.h>
+#include <kernel/memory/kheap.h>
 #include <kernel/devices/timer/timer.h>
+
 
 
 /* Parts of this code is adapted from the Protura OS
@@ -105,12 +108,6 @@ static int ide_identify(struct ide_identify_format *id)
     return 0;
 }
 
-/*
-    Sends an IDENTIFY command to the master IDE device and writes its repsonse 
-    to the argument structure.
-    Returns 0 if the device responded with success and valid data was written, 
-    -1 if the device returned a drive fault error or it timed out responding.
-*/
 int ide_identify_master(struct ide_identify_format *response)
 {
     outb(IDE_PORT_DRIVE_HEAD, IDE_DH_SHOULD_BE_SET | IDE_DH_LBA);
@@ -118,3 +115,42 @@ int ide_identify_master(struct ide_identify_format *response)
 }
 
 // TODO: ide_identify_slave
+
+int ide_readsect(int sector, bool slave, uint16_t *buffer)
+{
+    outb(IDE_PORT_DRIVE_HEAD, 
+        IDE_DH_SHOULD_BE_SET | IDE_DH_LBA | 
+        (slave ? IDE_DH_SLAVE : 0) | ((sector >> 24) & 0x0F));
+    outb(IDE_PORT_SECTOR_CNT, 1);
+    outb(IDE_PORT_LBA_LOW_8, (sector) & 0xFF);
+    outb(IDE_PORT_LBA_MID_8, (sector >> 8) & 0xFF);
+    outb(IDE_PORT_LBA_HIGH_8, (sector >> 16) & 0xFF);
+    outb(IDE_PORT_COMMAND_STATUS, IDE_COMMAND_PIO_LBA28_READ);
+
+    int status = ide_wait_for_status(0, IDE_READSTATUS_TIMEOUT);
+    if ((status & IDE_STATUS_READY) == 0 || status == IDE_STATUS_TIMEOUT) {
+        return -1;
+    }
+    ide_do_pio_read(buffer);
+
+    return 0;
+}
+
+
+void __ide_test_readsect(int sectors_to_test)
+{
+    char *buffer = kmalloc(IDE_SECTOR_SIZE+1);
+    memset(buffer, 0, IDE_SECTOR_SIZE+1);
+    for (int i = 0; i < sectors_to_test; i++) {
+        char c = (char) i;
+        ide_readsect(i, false, (uint16_t *) buffer);
+        kassert(buffer[IDE_SECTOR_SIZE] == 0);
+        for (int j = 0; j < IDE_SECTOR_SIZE; j++) {
+            if (buffer[j] != c) {
+                kprintf("At sector %d byte %d. Expected %d got %d\n", i, j, c, buffer[j]);
+            }
+            kassert(buffer[j] == c);
+        }
+    }
+    kfree(buffer);
+}
