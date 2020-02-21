@@ -24,7 +24,7 @@ static int SYS_write(uint32_t filedesc, uint32_t string, uint32_t length)
     */
     kassert(filedesc == 1);
     char buffer[length+1];
-    memcpy(buffer, string, length);
+    memcpy(buffer, (char *) string, length);
     buffer[length] = '\0';
     kprintf("%s", buffer);
 
@@ -33,6 +33,8 @@ static int SYS_write(uint32_t filedesc, uint32_t string, uint32_t length)
 
 int syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi, uint32_t edi)
 {
+    (void) esi;
+    (void) edi;
     switch(eax) {
     case SYS_EXIT:
         return SYS_exit(ebx);

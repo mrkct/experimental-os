@@ -15,6 +15,7 @@ int vfs_setroot(VFSInterface *vfsinterface)
 
 FileDesc kfopen(char *path, char *mode)
 {
+    (void) mode;
     // TODO: Check if the file is already opened for write
     // if we want to open for read, or if it is already opened for read if we 
     // want to write. 

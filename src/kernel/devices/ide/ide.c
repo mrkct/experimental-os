@@ -153,7 +153,7 @@ static int __ide_read_bytes(int offset, int count, char *buffer)
     char sector_buffer[IDE_SECTOR_SIZE];
     while (count > 0) {
         int sector = offset / IDE_SECTOR_SIZE;
-        int result = ide_readsect(sector, false, sector_buffer);
+        int result = ide_readsect(sector, false, (uint16_t *) sector_buffer);
         if (result != 0) {
             return result;
         }
@@ -181,6 +181,9 @@ static int __ide_read_bytes(int offset, int count, char *buffer)
 */
 static int __ide_write_bytes(int offset, int count, char *buffer)
 {
+    (void) offset;
+    (void) count;
+    (void) buffer;
     return -1;
 }
 

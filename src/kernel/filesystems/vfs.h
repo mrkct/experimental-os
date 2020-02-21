@@ -30,7 +30,7 @@ typedef struct DirEntry {
     void *fs_defined;
 } DirEntry;
 
-typedef struct VFSInterface {
+struct VFSInterface {
     unsigned char filesystem[VFS_FS_NAME_LEN];
 
     int (*fopen)(char *path, File *out);
@@ -42,7 +42,9 @@ typedef struct VFSInterface {
     int (*opendir)(char *path, Dir *out);
     int (*listdir)(Dir *dir, DirEntry *entry);
     int (*closedir)(Dir *dir);
-} VFSInterface;
+};
+
+typedef struct VFSInterface VFSInterface;
 
 
 typedef File *FileDesc;

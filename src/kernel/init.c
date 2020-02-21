@@ -17,6 +17,7 @@
 #include <kernel/modules.h>
 #include <kernel/devices/vdisk.h>
 #include <kernel/devices/ramdisk/ramdisk.h>
+#include <kernel/devices/ide/ide.h>
 #include <klibc/string.h>
 #include <kernel/filesystems/vfs.h>
 #include <kernel/filesystems/fat16/fat16vfs.h>

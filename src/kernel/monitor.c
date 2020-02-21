@@ -111,7 +111,7 @@ int monitor_system(int argc, char **argv)
     UNUSED(argc);
     UNUSED(argv);
 
-    uint32_t eax, ebx, ecx, edx;
+    unsigned int eax, ebx, ecx, edx;
     __get_cpuid(0, &eax, &ebx, &ecx, &edx);
     char cpuvendor[13];
     uint32_t *c = (uint32_t *) cpuvendor;
