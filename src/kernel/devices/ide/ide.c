@@ -9,7 +9,7 @@
 #include <klibc/string.h>
 #include <kernel/memory/kheap.h>
 #include <kernel/devices/timer/timer.h>
-
+#include <kernel/devices/vdisk.h>
 
 
 /* Parts of this code is adapted from the Protura OS
@@ -115,8 +115,13 @@ int ide_identify_master(struct ide_identify_format *response)
 }
 
 // TODO: ide_identify_slave
-
-int ide_readsect(int sector, bool slave, uint16_t *buffer)
+/*
+    Reads a single sector in the buffer. If 'slave' is true then the sector 
+    will be read from the slave device, otherwise from the master.
+    This is blocking since it uses PIO read
+    Returns 0 on success, -1 otherwise
+*/
+static int ide_readsect(int sector, bool slave, uint16_t *buffer)
 {
     outb(IDE_PORT_DRIVE_HEAD, 
         IDE_DH_SHOULD_BE_SET | IDE_DH_LBA | 
@@ -136,6 +141,58 @@ int ide_readsect(int sector, bool slave, uint16_t *buffer)
     return 0;
 }
 
+/*
+    This function is used to implement the read_bytes call in the 
+    DiskInterface struct that is used to implement a generic disk. 
+    This reads an array of bytes in the disk considering an offset at the 
+    start of the disk and a size, writing it in buffer. 
+    Returns 0 on success, otherwise the result of readsect
+*/
+static int __ide_read_bytes(int offset, int count, char *buffer)
+{
+    char sector_buffer[IDE_SECTOR_SIZE];
+    while (count > 0) {
+        int sector = offset / IDE_SECTOR_SIZE;
+        int result = ide_readsect(sector, false, sector_buffer);
+        if (result != 0) {
+            return result;
+        }
+        int bytes_to_sector_end = IDE_SECTOR_SIZE - ( (offset+count) % IDE_SECTOR_SIZE);
+        int bytes_to_copy = bytes_to_sector_end;
+        if (bytes_to_sector_end > count) {
+            bytes_to_copy = count;
+        }
+        memcpy(
+            buffer, 
+            &sector_buffer[offset % IDE_SECTOR_SIZE], 
+            bytes_to_copy
+        );
+
+        count -= bytes_to_copy;
+        buffer += bytes_to_copy;
+        offset += bytes_to_copy;
+    }
+
+    return 0;
+}
+
+/*
+    TODO: Implement this. 
+*/
+static int __ide_write_bytes(int offset, int count, char *buffer)
+{
+    return -1;
+}
+
+int ide_get_diskinterface(struct DiskInterface *interface)
+{
+    if (interface == NULL)
+        return -1;
+    interface->read_bytes = &__ide_read_bytes;
+    interface->write_bytes = &__ide_write_bytes;
+
+    return 0;
+}
 
 void __ide_test_readsect(int sectors_to_test)
 {

@@ -24,6 +24,7 @@
 
 
 struct DiskInterface ramdisk_interface;
+struct DiskInterface ide_interface;
 VFSInterface *vfsinterface;
 
 
@@ -45,10 +46,11 @@ void kernel_setup(multiboot_info_t *header, unsigned int magic)
     paging_init(header);
     paging_load(paging_kernel_pgdir());
 
-    struct Module *modRamdisk = get_module(0);
-    kassert(0 == ramdisk_init(modRamdisk->start, modRamdisk->size));
-    kassert(0 == ramdisk_get_diskinterface(&ramdisk_interface));
-    vfsinterface = fat16_get_vfsinterface(&ramdisk_interface);
+    // struct Module *modRamdisk = get_module(0);
+    // kassert(0 == ramdisk_init(modRamdisk->start, modRamdisk->size));
+    // kassert(0 == ramdisk_get_diskinterface(&ramdisk_interface));
+    kassert(0 == ide_get_diskinterface(&ide_interface));
+    vfsinterface = fat16_get_vfsinterface(&ide_interface);
     vfs_setroot(vfsinterface);
 
     scheduler_init();

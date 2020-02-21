@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-
+#include <kernel/devices/vdisk.h>
 
 #define IDE_SECTOR_SIZE     512
 #define IDE_READSTATUS_TIMEOUT  200
@@ -124,12 +124,10 @@ struct ide_identify_format {
 int ide_identify_master(struct ide_identify_format *);
 
 /*
-    Reads a single sector in the buffer. If 'slave' is true then the sector 
-    will be read from the slave device, otherwise from the master.
-    This is blocking since it uses PIO read
-    Returns 0 on success, -1 otherwise
+    TODO: docs for this
+    TODO: write_bytes
 */
-int ide_readsect(int sector, bool slave, uint16_t *buffer);
+int ide_get_diskinterface(struct DiskInterface *interface);
 
 /*
     This function is only used to test if readsect works correctly. 
