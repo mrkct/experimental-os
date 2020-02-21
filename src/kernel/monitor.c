@@ -17,7 +17,7 @@
 // TODO: Avoid fixed max size arguments
 #define MAX_ARGS 25
 
-#define UNUSED __attribute__((unused))
+#define UNUSED(x) (void)(x)
 
 struct MonitorCommand commands[] = {
     {"help", "Displays all available commands with their descriptions", monitor_help},
@@ -83,10 +83,11 @@ int monitor_handle(char *command)
     return 0;
 }
 
-
-
-int monitor_help(UNUSED int argc, UNUSED char **args)
+int monitor_help(int argc, char **args)
 {
+    UNUSED(argc);
+    UNUSED(args);
+
     kprintf("Here is a list of all availables commands:\n");
     int commands_length = (int) (sizeof(commands) / sizeof(commands[0]));
     for (int i = 0; i < commands_length; i++) {
@@ -96,14 +97,20 @@ int monitor_help(UNUSED int argc, UNUSED char **args)
     return 0;
 }
 
-int monitor_ticks(UNUSED int argc, UNUSED char **arguments)
+int monitor_ticks(int argc, char **args)
 {
+    UNUSED(argc);
+    UNUSED(args);
+
     kprintf("%d\n", timer_get_ticks());
     return 0;
 }
 
-int monitor_system(UNUSED int argc, UNUSED char **arguments)
+int monitor_system(int argc, char **argv)
 {
+    UNUSED(argc);
+    UNUSED(argv);
+
     uint32_t eax, ebx, ecx, edx;
     __get_cpuid(0, &eax, &ebx, &ecx, &edx);
     char cpuvendor[13];
@@ -191,8 +198,11 @@ int monitor_run(int argc, char **argv)
 
 extern Process *running_proc;
 
-int monitor_ps(int argc, char **argv)
+int monitor_ps(int argc, char **args)
 {
+    UNUSED(argc);
+    UNUSED(args);
+
     kprintf("Running processes: \n");
     kprintf("%d: %s (running)\n", running_proc->pid, running_proc->name);
     Process *p = running_proc->next;
@@ -204,8 +214,11 @@ int monitor_ps(int argc, char **argv)
     return 0;
 }
 
-int monitor_date(int argc, char **argv)
+int monitor_date(int argc, char **args)
 {
+    UNUSED(argc);
+    UNUSED(args);
+
     struct DateTime dt;
     get_datetime(&dt);
     static const char *month_names[] = {
