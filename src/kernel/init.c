@@ -24,8 +24,7 @@
 #include <kernel/process.h>
 
 
-struct DiskInterface ramdisk_interface;
-struct DiskInterface ide_interface;
+struct DiskInterface diskinterface;
 VFSInterface *vfsinterface;
 
 
@@ -39,22 +38,45 @@ void kernel_setup(multiboot_info_t *header, unsigned int magic)
     
     uint32_t memory = multiboot_read_memory(header);
     memory_set_total(memory);
-    kprintf("Detected %d bytes of total memory\n", memory);
+    kprintf("Detected %d MB of total memory\n", memory / 1024 / 1024);
 
     int loaded = load_grub_modules(header);
     kprintf("Loaded %d grub modules\n", loaded);
     
     paging_init(header);
     paging_load(paging_kernel_pgdir());
-
-    // struct Module *modRamdisk = get_module(0);
-    // kassert(0 == ramdisk_init(modRamdisk->start, modRamdisk->size));
-    // kassert(0 == ramdisk_get_diskinterface(&ramdisk_interface));
-    kassert(0 == ide_get_diskinterface(&ide_interface));
-    vfsinterface = fat16_get_vfsinterface(&ide_interface);
-    vfs_setroot(vfsinterface);
-
+    timer_init(1);
     scheduler_init();
     init_idt();
-    timer_init(1);
+
+    kprintf("Checking for an IDE device...");
+    
+    struct DiskInterface diskinterface;
+    struct ide_identify_format id;
+    int result = ide_identify_master(&id);
+    if (result == 0) {
+        kprintf("found\n");
+        kprintf(
+            "Using device %s - %dMB\n", 
+            id.model, 
+            id.lba_capacity * 512 / 1024 / 1024
+        );
+        kassert(0 == ide_get_diskinterface(&diskinterface));
+    } else {
+        kprintf("not found\n");
+        kprintf("Checking for a ramdisk...");
+        struct Module *mod_ramdisk = get_module(0);
+        if (mod_ramdisk == NULL) {
+            kprintf("not found\n");
+            panic("Can't continue: no usable disk device found\n");
+        }
+        kassert(0 == ramdisk_init(mod_ramdisk->start, mod_ramdisk->size));
+        kassert(0 == ramdisk_get_diskinterface(&diskinterface));
+        kprintf("Ramdisk at %x with %d MB\n", mod_ramdisk->start, mod_ramdisk->size / 1024 / 1024);
+    }
+    
+    vfsinterface = fat16_get_vfsinterface(&diskinterface);
+    vfs_setroot(vfsinterface);
+
+    kprintf("All done. Ready to start!\n");
 }
