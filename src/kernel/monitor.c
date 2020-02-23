@@ -12,6 +12,7 @@
 #include <kernel/memory/kheap.h>
 #include <kernel/process.h>
 #include <kernel/lib/time.h>
+#include <kernel/devices/ide/ide.h>
 
 
 // TODO: Avoid fixed max size arguments
@@ -121,6 +122,14 @@ int monitor_system(int argc, char **argv)
     cpuvendor[12] = '\0';
     kprintf("CPU Vendor: %s\n", cpuvendor);
     kprintf("Detected memory: %d MB\n", memory_get_total() / 1024 / 1024);
+
+    struct ide_identify_format id;
+    int ide_result = ide_identify_master(&id);
+    if (ide_result != 0) {
+        kprintf("No IDE device connected\n");
+    } else {
+        kprintf("IDE Device Name: %s, %dMB\n", id.model, id.lba_capacity * 512 / 1024 / 1024);
+    }
     return 0;
 }
 
