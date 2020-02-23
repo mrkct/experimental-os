@@ -7,7 +7,7 @@
 #include <kernel/devices/vdisk.h>
 
 #define IDE_SECTOR_SIZE     512
-#define IDE_READSTATUS_TIMEOUT  200
+#define IDE_READSTATUS_TIMEOUT  40
 
 /*
     Parts of this code is copied/adapted from the Protura OS

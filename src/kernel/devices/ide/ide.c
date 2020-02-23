@@ -19,7 +19,7 @@
 /*
     Waits for the status port to not be busy and returns its value. 
     Returns the content of the status register or IDE_STATUS_TIMEOUT if 
-    after 200 timer ticks the status is still busy
+    after IDE_READSTATUS_TIMEOUT timer ticks the status is still busy
 */
 static int ide_wait_for_status(int status, int timeout)
 {

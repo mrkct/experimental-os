@@ -9,7 +9,7 @@
 #include <klibc/string.h>
 
 
-static struct VFSInterface vfsinterface;
+static VFSInterface vfsinterface;
 
 
 struct VFSInterface *fat16_get_vfsinterface(struct DiskInterface *diskinterface)
@@ -72,6 +72,9 @@ int fat16vfs_fread(char *buffer, int count, File *file)
 
 int fat16vfs_fwrite(char *buffer, int count, File *file)
 {
+    (void) buffer;
+    (void) count;
+    (void) file;
     // TODO: Implement
     return -1;
 }
