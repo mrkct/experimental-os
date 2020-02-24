@@ -21,12 +21,15 @@ void __timer_tick()
     ticks++;
 }
 
+
+static uint16_t div;
 /*
     Sets the timer to send an interrupt every 'milliseconds' ms. Note that 
     it is not accurate
 */
 void timer_init(uint16_t frequency)
 {
+    div = frequency;
     /*
         The PIC 8259 by default sends an interrupt every 1193180Hz, to change 
         this we can send a number to divide this frequency. 
@@ -37,4 +40,9 @@ void timer_init(uint16_t frequency)
     outb(0x43, 0x36);
     outb(0x40, (uint8_t) (divisor & 0xff));
     outb(0x40, (uint8_t) ((divisor >> 8) & 0xff));
+}
+
+uint16_t timer_get_divisor(void)
+{
+    return div;
 }
