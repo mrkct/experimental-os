@@ -30,7 +30,7 @@ static bool serial_can_transmit(void)
     return inb(SERIAL_PORT_COM1_LINESTATUS) & 0x20;
 }
 
-static void serial_writechar(char c)
+static int serial_writechar(char c)
 {
     uint32_t start = timer_get_ticks();
     do {
@@ -46,8 +46,10 @@ static void serial_writechar(char c)
 
 int serial_write(const char *data)
 {
-    for (int i = 0; data[i]; i++)
-        serial_writechar(data[i]);
+    for (int i = 0; data[i]; i++) {
+        if (serial_writechar(data[i]) != 0)
+            return -1;
+    }
     
     return 0;
 }

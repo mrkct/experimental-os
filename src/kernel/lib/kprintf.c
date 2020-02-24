@@ -3,12 +3,65 @@
 #include <stdint.h>
 #include <stdarg.h>
 #include <kernel/devices/tty/tty.h>
+#include <kernel/devices/serial/serial.h>
 
-
-int kprintf(char *format, ...)
+/*
+    Copies 'str' into 'dest' and returns how many characters have been copied
+*/
+static int append_string(char *dest, char *str)
 {
-    va_list args;
-    va_start(args, format);
+    int copied = 0;
+    while (*str) {
+        *dest = *str;
+        str++;
+        dest++;
+        copied++;
+    }
+
+    return copied;
+}
+
+/*
+    Writes an int in its string form into 'dest' and returns how many 
+    characters have been written
+*/
+static int append_int(char *dest, int data, int base) 
+{
+    int characters = 0;
+    bool is_negative = false;
+	if (data < 0) {
+		is_negative = true;
+		data *= -1;
+	}
+	
+	uint8_t digits[10] = {0};
+	int i = 9;
+	do {
+		digits[i--] = data % base;
+		data /= base;
+	} while (data != 0); 
+	
+	if (is_negative && base == 10) {
+        *dest = '-';
+        dest++;
+        characters++;
+    }
+	
+	for (i = i+1; i < 10; i++) {
+		if (digits[i] < 10)
+            *dest = '0' + digits[i];
+		else
+            *dest = 'a' + (digits[i] - 10);
+        dest++;
+        characters++;
+	}
+
+    return characters;
+}
+
+static int kvprintf(char *str, char *format, va_list args)
+{
+    char *start_of_string = str;
 
     int printed = 0;
     char *current = format;
@@ -17,42 +70,57 @@ int kprintf(char *format, ...)
         if (in_format) {
             switch (*current) {
             case 'd':
-                terminal_writeint(va_arg(args, int), 10);
+                str += append_int(str, va_arg(args, int), 10);
                 break;
             case '%':
-                terminal_putchar('%');
+                *str++ = '%';
                 break;
             case 'x':
             case 'X':
-                terminal_writeint(va_arg(args, int), 16);
+                str += append_int(str, va_arg(args, int), 16);
                 break;
             case 'b':
-                terminal_writeint(va_arg(args, int), 2);
+                str += append_int(str, va_arg(args, int), 2);
                 break;
             case 's':
-                terminal_writestring(va_arg(args, char*));
+                str += append_string(str, va_arg(args, char*));
                 break;
             case 'c':
                 // This is correct as 'int'. 
                 // 'char' gets promoted to 'int' when passed through '...'
-                terminal_putchar(va_arg(args, int));
+                *str++ = (char) va_arg(args, int);
                 break;
             default:
-                terminal_writestring("[kprintf: unknown specifier]");
+                str += append_string(str, "[ksprintf: unknown specifier]");
                 break;
             }
             in_format = false;
-            printed++;
         } else {
             if (*current == '%') {
                 in_format = true;
             } else {
-                terminal_putchar(*current);
+                *str++ = *current;
             }
         }
         current++;
     }
+    *str++ = '\0';
 
+    return str - start_of_string;
+}
+
+int kprintf(char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    /*
+        We don't dynamically allocate this buffer because when we call 
+        kprintf we might have not setup paging yet
+    */
+    char buffer[4096];
+    int printed = kvprintf(buffer, format, args);
+    terminal_writestring(buffer);
+    serial_write(buffer);
     va_end(args);
 
     return printed;
