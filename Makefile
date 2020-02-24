@@ -23,6 +23,7 @@ CSOURCES = \
 	src/kernel/devices/tty/tty.c \
 	src/kernel/devices/ramdisk/ramdisk.c \
 	src/kernel/devices/ide/ide.c \
+	src/kernel/devices/serial/serial.c \
 	src/kernel/filesystems/vfs.c \
 	src/kernel/filesystems/fat16/fat16.c \
 	src/kernel/filesystems/fat16/fat16vfs.c \
@@ -75,18 +76,28 @@ clean:
 	rm -f -R *.bin
 	rm -f -R *.iso
 
-run: kernel.bin
-	qemu-system-i386 -kernel kernel.bin -d guest_errors
+run: build-iso
+	qemu-system-i386 \
+		-cdrom "Experimental OS.iso" \
+		-boot d \
+		-serial stdio \
+		-no-shutdown -d guest_errors
 
-run-gdb: kernel.bin
-	qemu-system-i386 -kernel kernel.bin -d guest_errors -s -S
-
-run-iso: build-iso
-	# qemu-system-i386 -cdrom "$(OS_NAME).iso" -no-shutdown
-	qemu-system-i386 -cdrom "Experimental OS.iso" -hda isodir/boot/ramdisk.initrd -boot d -no-shutdown -d guest_errors
+gdb: build-iso
+	qemu-system-i386 \
+		-cdrom "Experimental OS.iso" \
+		-boot d \
+		-serial stdio \
+		-no-shutdown -d guest_errors \
+		-s -S
 
 run-disk: build-iso
-	qemu-system-i386 -cdrom "Experimental OS.iso" -drive file=isodir/boot/ramdisk.initrd,if=ide -boot d -no-shutdown -d guest_errors
+	qemu-system-i386 \
+		-cdrom "Experimental OS.iso" \
+		-boot d \
+		-serial stdio \
+		-no-shutdown -d guest_errors \
+		-drive file=isodir/boot/ramdisk.initrd,if=ide 
 
 
 ./src/kernel/arch/i386/boot/boot.o: config

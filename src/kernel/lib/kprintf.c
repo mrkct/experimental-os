@@ -63,7 +63,6 @@ static int kvprintf(char *str, char *format, va_list args)
 {
     char *start_of_string = str;
 
-    int printed = 0;
     char *current = format;
     bool in_format = false;
     while (*current) {
