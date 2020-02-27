@@ -7,9 +7,9 @@
 .set CHECKSUM, -(MAGIC + FLAGS) # checksum of above, to prove we are multiboot
 
 .set VIDEO_MODE,  0             # 0 = video mode, 1 = text mode
-.set WIDTH,       1024             # 0 = auto
-.set HEIGHT,      768             # 0 = auto
-.set DEPTH,       24             # 0 = auto
+.set WIDTH,       1024          # 0 = auto
+.set HEIGHT,      768           # 0 = auto
+.set DEPTH,       24            # 0 = auto
 
 # Declare a header as in the Multiboot Standard.
 .section .multiboot
