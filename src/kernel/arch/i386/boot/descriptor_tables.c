@@ -77,6 +77,9 @@ void interrupt_handler(struct intframe_t *frameptr)
             frameptr->int_no, 
             frameptr->err_code
         );
+        if (count > 4) {
+            panic("too many faults");
+        }
     } else {
         dispatch_irq(frameptr);
         pic_ack(frameptr->int_no);
