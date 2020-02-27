@@ -22,14 +22,14 @@ static int append_string(char *dest, char *str)
 }
 
 /*
-    Writes an int in its string form into 'dest' and returns how many 
-    characters have been written
+    Writes a signed int in its string form into 'dest' and returns how many 
+    characters have been written.
 */
-static int append_int(char *dest, int data, int base) 
+static int append_signed_int(char *dest, int data, int base) 
 {
     int characters = 0;
     bool is_negative = false;
-	if (data < 0) {
+	if (data < 0 && base == 10) {
 		is_negative = true;
 		data *= -1;
 	}
@@ -59,6 +59,33 @@ static int append_int(char *dest, int data, int base)
     return characters;
 }
 
+/*
+    Writes an unsigned int in its string form into 'dest' and returns how 
+    many characters have been written
+*/
+static int append_unsigned_int(char *dest, unsigned data, int base) 
+{
+    int characters = 0;
+	
+	uint8_t digits[10] = {0};
+	int i = 9;
+	do {
+		digits[i--] = data % base;
+		data /= base;
+	} while (data != 0); 
+	
+	for (i = i+1; i < 10; i++) {
+		if (digits[i] < 10)
+            *dest = '0' + digits[i];
+		else
+            *dest = 'a' + (digits[i] - 10);
+        dest++;
+        characters++;
+	}
+
+    return characters;
+}
+
 static int kvprintf(char *str, char *format, va_list args)
 {
     char *start_of_string = str;
@@ -69,17 +96,25 @@ static int kvprintf(char *str, char *format, va_list args)
         if (in_format) {
             switch (*current) {
             case 'd':
-                str += append_int(str, va_arg(args, int), 10);
+                str += append_signed_int(str, va_arg(args, int), 10);
+                break;
+            case 'u':
+                str += append_unsigned_int(str, va_arg(args, int), 10);
                 break;
             case '%':
                 *str++ = '%';
                 break;
             case 'x':
             case 'X':
-                str += append_int(str, va_arg(args, int), 16);
+                str += append_unsigned_int(str, va_arg(args, int), 16);
+                break;
+            case 'p':
+                *str++ = '0';
+                *str++ = 'x';
+                str += append_unsigned_int(str, va_arg(args, int), 16);
                 break;
             case 'b':
-                str += append_int(str, va_arg(args, int), 2);
+                str += append_unsigned_int(str, va_arg(args, int), 2);
                 break;
             case 's':
                 str += append_string(str, va_arg(args, char*));
@@ -108,6 +143,8 @@ static int kvprintf(char *str, char *format, va_list args)
     return str - start_of_string;
 }
 
+char buffer[4096];
+
 int kprintf(char *format, ...)
 {
     va_list args;
@@ -116,7 +153,6 @@ int kprintf(char *format, ...)
         We don't dynamically allocate this buffer because when we call 
         kprintf we might have not setup paging yet
     */
-    char buffer[4096];
     int printed = kvprintf(buffer, format, args);
     terminal_writestring(buffer);
     serial_write(buffer);
