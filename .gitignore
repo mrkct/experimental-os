@@ -7,6 +7,8 @@ src/ramdisk/ramdisk.initrd
 *.o
 *.bin
 *.iso
-notes_*.md
+notes_*
+ignore_*
 grub.cfg
 dump.S
+*.img
