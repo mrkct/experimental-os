@@ -1,9 +1,15 @@
 # Declare constants for the multiboot header.
 .set ALIGN,    1<<0             # align loaded modules on page boundaries
 .set MEMINFO,  1<<1             # provide memory map
-.set FLAGS,    ALIGN | MEMINFO  # this is the Multiboot 'flag' field
+.set GRAPHICS, 1<<2             # enable video mode
+.set FLAGS,    ALIGN | MEMINFO | GRAPHICS  # this is the Multiboot 'flag' field
 .set MAGIC,    0x1BADB002       # 'magic number' lets bootloader find the header
 .set CHECKSUM, -(MAGIC + FLAGS) # checksum of above, to prove we are multiboot
+
+.set VIDEO_MODE,  0             # 0 = video mode, 1 = text mode
+.set WIDTH,       1024             # 0 = auto
+.set HEIGHT,      768             # 0 = auto
+.set DEPTH,       24             # 0 = auto
 
 # Declare a header as in the Multiboot Standard.
 .section .multiboot
@@ -11,7 +17,11 @@
 .long MAGIC
 .long FLAGS
 .long CHECKSUM
-
+.skip 20             # skip 20 bytes that are supposed to be valid only if flag[16] = 1
+.long VIDEO_MODE
+.long WIDTH
+.long HEIGHT
+.long DEPTH
 # Reserve a stack for the initial thread.
 .section .bss
 .align 16

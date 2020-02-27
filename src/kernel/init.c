@@ -23,6 +23,8 @@
 #include <kernel/filesystems/fat16/fat16vfs.h>
 #include <kernel/process.h>
 #include <kernel/devices/serial/serial.h>
+#include <kernel/devices/framebuffer/framebuffer.h>
+#include <kernel/lib/graphics/gfx.h>
 
 
 struct DiskInterface diskinterface;
@@ -44,12 +46,25 @@ void kernel_setup(multiboot_info_t *header, unsigned int magic)
     int loaded = load_grub_modules(header);
     kprintf("Loaded %d grub modules\n", loaded);
     
-    paging_init(header);
-    paging_load(paging_kernel_pgdir());
     timer_init(1);
     serial_init();
+
+    paging_init(header);
+    paging_load(paging_kernel_pgdir());
+
     scheduler_init();
     init_idt();
+
+    
+    struct FrameBuffer fb;
+    kassert(0 == framebuffer_init(header));
+    kassert(0 == framebuffer_get(&fb));
+
+    kprintf("Framebuffer: \n");
+    kprintf("\tAddr: %p\n", fb.addr);
+    kprintf(
+        "\tWidth: %d, Height: %d, Bpp: %d, Pitch: %d\n", 
+        fb.width, fb.height, fb.bitsPerPixel, fb.pitch);
 
     kprintf("Checking for an IDE device...");
     
@@ -81,5 +96,4 @@ void kernel_setup(multiboot_info_t *header, unsigned int magic)
     vfs_setroot(vfsinterface);
 
     kprintf("All done. Ready to start!\n");
-    serial_write("Hello, serial world!\n");
 }
