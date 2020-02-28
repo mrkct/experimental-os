@@ -9,6 +9,8 @@ struct FrameBuffer {
     int bitsPerPixel;
     int width;
     int height;
+
+    int (*draw_pixel)(struct FrameBuffer *, int, int, unsigned char, unsigned char, unsigned char);
 };
 
 /*

@@ -34,6 +34,8 @@ CSOURCES = \
 	src/kernel/lib/kprintf.c \
 	src/kernel/lib/read_string.c \
 	src/kernel/lib/time.c \
+	src/kernel/lib/graphics/text.c \
+	src/kernel/lib/graphics/gfx.c \
 	src/kernel/memory/memory.c \
 	src/kernel/memory/kheap.c \
 	src/kernel/monitor.c \

@@ -6,6 +6,25 @@
 
 static struct FrameBuffer main_fb;
 
+/*
+    Draws a single pixel onto the framebuffer. 
+    Returns 0 on success
+*/
+static int draw_pixel(
+    struct FrameBuffer *fb, 
+    int x, int y, 
+    unsigned char r, unsigned char g, unsigned char b
+)
+{
+    char *addr = (char *) fb->addr;
+    int offset = y * fb->pitch + 3 * x;
+    addr[offset] = b;
+    addr[offset + 1] = g;
+    addr[offset + 2] = r;
+
+    return 0;
+}
+
 int framebuffer_init(multiboot_info_t *header)
 {
     pdir_t kernel_pgdir = paging_kernel_pgdir();
@@ -14,20 +33,21 @@ int framebuffer_init(multiboot_info_t *header)
     }
 
     main_fb = (struct FrameBuffer) {
-        .addr = header->framebuffer_addr, 
+        .addr = (void *) header->framebuffer_addr, 
         .pitch = header->framebuffer_pitch, 
         .bitsPerPixel = header->framebuffer_bpp, 
         .width = header->framebuffer_width, 
-        .height = header->framebuffer_height
+        .height = header->framebuffer_height,
+        .draw_pixel = &draw_pixel
     };
 
     unsigned fb_size = main_fb.pitch * main_fb.height;
 
     pgdir_map(
         kernel_pgdir, 
-        ROUNDDOWN(main_fb.addr, PGSIZE), 
+        ROUNDDOWN((uint32_t) main_fb.addr, PGSIZE), 
         ROUNDUP(fb_size, PGSIZE), 
-        ROUNDDOWN(main_fb.addr, PGSIZE), 
+        ROUNDDOWN((uint32_t) main_fb.addr, PGSIZE), 
         PG_PRESENT | PG_USER | PG_RW
     );
 
