@@ -1,6 +1,6 @@
 #include <stdbool.h>
 #include <kernel/lib/graphics/gfx.h>
-#include <kernel/devices/framebuffer/framebuffer.h>
+#include <kernel/devices/framebuffer.h>
 #include <kernel/lib/graphics/text.h>
 #include <kernel/lib/kassert.h>
 
@@ -36,12 +36,9 @@ int draw_char(struct FrameBuffer *fb, int x, int y, char c)
     for (int row = 0; row < charheight; row++) {
         for (int j = 7; j >= 0; j--) {
             if ((fontdata[charoffset + row] >> j) & 0x1) {
-                fb->draw_pixel(
-                    fb, 
-                    x + (7 - j), 
-                    y + row, 
-                    col_r, col_g, col_b
-                );
+                int offset = fb_offset(fb, x + (7 - j), y + row);
+                char *addr = (char *) fb->addr;
+                setpixel(&addr[offset], col_r, col_g, col_b);
             }
         }
     }

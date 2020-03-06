@@ -24,7 +24,7 @@ CSOURCES = \
 	src/kernel/devices/ramdisk/ramdisk.c \
 	src/kernel/devices/ide/ide.c \
 	src/kernel/devices/serial/serial.c \
-	src/kernel/devices/framebuffer/framebuffer.c \
+	src/kernel/devices/framebuffer.c \
 	src/kernel/filesystems/vfs.c \
 	src/kernel/filesystems/fat16/fat16.c \
 	src/kernel/filesystems/fat16/fat16vfs.c \

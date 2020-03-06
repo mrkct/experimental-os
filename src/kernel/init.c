@@ -23,7 +23,7 @@
 #include <kernel/filesystems/fat16/fat16vfs.h>
 #include <kernel/process.h>
 #include <kernel/devices/serial/serial.h>
-#include <kernel/devices/framebuffer/framebuffer.h>
+#include <kernel/devices/framebuffer.h>
 #include <kernel/lib/graphics/gfx.h>
 
 
@@ -56,15 +56,14 @@ void kernel_setup(multiboot_info_t *header, unsigned int magic)
     init_idt();
 
     
-    struct FrameBuffer fb;
-    kassert(0 == framebuffer_init(header));
-    kassert(0 == framebuffer_get(&fb));
+    kassert(0 == fb_init(header));
+    struct FrameBuffer *fb = get_screen_framebuffer();
 
     kprintf("Framebuffer: \n");
-    kprintf("\tAddr: %p\n", fb.addr);
+    kprintf("\tAddr: %p\n", fb->addr);
     kprintf(
         "\tWidth: %d, Height: %d, Bpp: %d, Pitch: %d\n", 
-        fb.width, fb.height, fb.bitsPerPixel, fb.pitch);
+        fb->width, fb->height, fb->bytesPerPixel, fb->pitch);
 
     kprintf("Checking for an IDE device...");
     

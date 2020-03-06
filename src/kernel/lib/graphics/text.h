@@ -2,7 +2,7 @@
 #define TEXT_H
 
 #include <stdint.h>
-#include <kernel/devices/framebuffer/framebuffer.h>
+#include <kernel/devices/framebuffer.h>
 
 /*
     A PSF1 Font File has the following structure:
