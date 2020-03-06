@@ -16,8 +16,9 @@ int fb_init(multiboot_info_t *header)
         panic("before calling framebuffer_init you need to setup paging!");
     }
 
+    void *addr = (void *) (header->framebuffer_addr & 0x00000000ffffffff);
     main_buffer = (struct FrameBuffer) {
-        .addr = (void *) header->framebuffer_addr, 
+        .addr = addr, 
         .pitch = header->framebuffer_pitch, 
         .bytesPerPixel = header->framebuffer_bpp / 8, 
         .width = header->framebuffer_width, 
@@ -64,8 +65,11 @@ struct FrameBuffer *fb_alloc(int width, int height)
         return NULL;
     }
 
-    *fb = main_buffer;
+    fb->bytesPerPixel = main_buffer.bytesPerPixel;
     fb->addr = addr;
+    fb->width = width;
+    fb->height = height;
+    fb->pitch = width * main_buffer.bytesPerPixel;
 
     return fb;
 }
@@ -89,8 +93,8 @@ void fb_blit(
     fb_dest += y * dest->pitch + bpp * x;
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
-            kassert((x+j) >= 0 && (x+j) < dest->width);
-            kassert((y+i) >= 0 && (y+i) < dest->height);
+            kassert((x+j) >= 0 && (x+j) < x + dest->width);
+            kassert((y+i) >= 0 && (y+i) < y + dest->height);
             const unsigned dest_offset = bpp * (x+j);
             const unsigned src_offset = bpp * j;
             
