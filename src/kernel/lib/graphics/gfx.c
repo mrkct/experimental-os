@@ -28,26 +28,28 @@ void draw_rectangle(
     bool outlined
 )
 {
+    const int bpp = fb->bytesPerPixel;
     if (!outlined) {
         char *addr = (char *) (fb->addr + y * fb->pitch);
         for (int i = 0; i < height; i++) {
-            for (int xpos = x; xpos < x + width; xpos++) {
-                SET_RGB(addr[3 * xpos], r, g, b);
+            const int end_offset = bpp * (x + width);
+            for (int xpos = bpp * x; xpos < end_offset; xpos += bpp) {
+                SET_RGB(addr[xpos], r, g, b);
             }
             addr += fb->pitch;
         }
     } else {
-        char *top = (char *) (fb->addr + y * fb->pitch + 3 * x);
+        char *top = (char *) (fb->addr + y * fb->pitch + bpp * x);
         char *bottom = top + fb->pitch * height;
         for (int xpos = x; xpos < x + width; xpos++) {
             SET_RGB(*top, r, g, b);
             SET_RGB(*bottom, r, g, b);
-            top += 3;
-            bottom += 3;
+            top += bpp;
+            bottom += bpp;
         }
 
-        char *left = (char *) fb->addr + fb->pitch * y + 3 * x;
-        char *right = left + 3 * width;
+        char *left = (char *) fb->addr + fb->pitch * y + bpp * x;
+        char *right = left + bpp * width;
         for (int ypos = y; ypos < y + height; ypos++) {
             SET_RGB(*left, r, g, b);
             SET_RGB(*right, r, g, b);
