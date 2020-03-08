@@ -90,7 +90,7 @@ void fb_blit(
     char *fb_dest = (char *) dest->addr;
     char *fb_src = (char *) src->addr;
 
-    fb_dest += y * dest->pitch + bpp * x;
+    fb_dest += y * dest->pitch;
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
             kassert((x+j) >= 0 && (x+j) < x + dest->width);
