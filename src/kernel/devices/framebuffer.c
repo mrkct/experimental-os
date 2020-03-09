@@ -124,7 +124,40 @@ int screen_height(void)
 
 void screen_update(int x, int y, int width, int height)
 {
-    fb_blit(&main_buffer, &double_buffer, x, y, width, height);
+    char *mainb = (char *) main_buffer.addr;
+    char *doubleb = (char *) double_buffer.addr;
+    const int bpp = main_buffer.bytesPerPixel;
+    const unsigned offset = y * main_buffer.pitch + x * bpp;
+    
+    const int screenw = screen_width();
+    const int screenh = screen_height();
+
+    mainb += offset;
+    doubleb += offset;
+
+    /*
+        TODO: Optimize this, all those IFs are terrible for performance
+    */
+    for (int i = 0; i < height; i++) {
+        if (y + i >= screenh)
+            break;
+        
+        if (y + i >= 0) {
+            for (int j = 0; j < width; j++) {
+                if (x + j < 0)
+                    continue;
+                if (x + j >= screenw)
+                    break;
+
+                const unsigned off = bpp * j;
+                mainb[off]     = doubleb[off];
+                mainb[off + 1] = doubleb[off + 1];
+                mainb[off + 2] = doubleb[off + 2];
+            }
+        }
+        mainb += main_buffer.pitch;
+        doubleb += double_buffer.pitch;
+    }
 }
 
 void screen_refresh(void)
