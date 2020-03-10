@@ -24,7 +24,7 @@
 #include <kernel/process.h>
 #include <kernel/devices/serial/serial.h>
 #include <kernel/devices/framebuffer.h>
-#include <kernel/lib/graphics/gfx.h>
+#include <kernel/gui/compositor.h>
 
 
 struct DiskInterface diskinterface;
@@ -93,6 +93,9 @@ void kernel_setup(multiboot_info_t *header, unsigned int magic)
     
     vfsinterface = fat16_get_vfsinterface(&diskinterface);
     vfs_setroot(vfsinterface);
+
+    kprintf("Starting Compositor Server");
+    process_create("Compositor Server", __compositor_main, paging_kernel_pgdir());
 
     kprintf("All done. Ready to start!\n");
 }
