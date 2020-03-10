@@ -27,14 +27,27 @@ static int psf_charheight(char *font) {
 
 int draw_char(struct FrameBuffer *fb, int x, int y, char c)
 {
+    const int screenw = fb->width;
+    const int screenh = fb->height;
     int charoffset = psf_charoffset(fontdata, c);
     if (charoffset < 0)
         return -1;
     int charheight = psf_charheight(fontdata);
     unsigned char col_r, col_g, col_b;
     get_color(&col_r, &col_g, &col_b);
+    /*
+        TODO: Optimize this to avoid all these IFs in the loop
+    */
     for (int row = 0; row < charheight; row++) {
+        if (y+row < 0)
+            continue;
+        if (y+row >= screenh)
+            break;
         for (int j = 7; j >= 0; j--) {
+            if (x + (7 - j) < 0)
+                continue;
+            if (x + (7 - j) >= screenw)
+                break;
             if ((fontdata[charoffset + row] >> j) & 0x1) {
                 int offset = fb_offset(fb, x + (7 - j), y + row);
                 char *addr = (char *) fb->addr;

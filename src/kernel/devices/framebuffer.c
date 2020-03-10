@@ -86,21 +86,33 @@ void fb_blit(
     int x, int y, int width, int height
 )
 {
+    /*
+        TODO: Rewrite this to avoid checking IFs at every iteration. 
+        This is terrible
+    */
     const int bpp = dest->bytesPerPixel;
+    const int screenw = dest->width;
+    const int screenh = dest->height;
     char *fb_dest = (char *) dest->addr;
     char *fb_src = (char *) src->addr;
 
     fb_dest += y * dest->pitch;
     for (int i = 0; i < height; i++) {
-        for (int j = 0; j < width; j++) {
-            kassert((x+j) >= 0 && (x+j) < x + dest->width);
-            kassert((y+i) >= 0 && (y+i) < y + dest->height);
-            const unsigned dest_offset = bpp * (x+j);
-            const unsigned src_offset = bpp * j;
-            
-            fb_dest[dest_offset] = fb_src[src_offset];
-            fb_dest[dest_offset + 1] = fb_src[src_offset + 1];
-            fb_dest[dest_offset + 2] = fb_src[src_offset + 2];
+        if (y+i >= screenh)
+            break;
+        if (y+i >= 0) {
+            for (int j = 0; j < width; j++) {
+                if (x+j < 0)
+                    continue;
+                if (x+j >= screenw)
+                    break;
+                const unsigned dest_offset = bpp * (x+j);
+                const unsigned src_offset = bpp * j;
+
+                fb_dest[dest_offset] = fb_src[src_offset];
+                fb_dest[dest_offset + 1] = fb_src[src_offset + 1];
+                fb_dest[dest_offset + 2] = fb_src[src_offset + 2];
+            }
         }
         fb_dest += dest->pitch;
         fb_src += src->pitch;

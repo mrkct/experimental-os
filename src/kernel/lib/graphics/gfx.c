@@ -28,13 +28,27 @@ void draw_rectangle(
     bool outlined
 )
 {
+    /*
+        TODO: Optimize this to avoid all those IFs in the loops
+    */
+    const int screenw = fb->width;
+    const int screenh = fb->height;
+
     const int bpp = fb->bytesPerPixel;
     if (!outlined) {
         char *addr = (char *) (fb->addr + y * fb->pitch);
         for (int i = 0; i < height; i++) {
-            const int end_offset = bpp * (x + width);
-            for (int xpos = bpp * x; xpos < end_offset; xpos += bpp) {
-                SET_RGB(addr[xpos], r, g, b);
+            if (y + i >= screenh)
+                break;
+            if (y + i >= 0) {
+                const int end_offset = bpp * (x + width);
+                for (int j = 0; j < width; j++) {
+                    if (x + j < 0)
+                        continue;
+                    if (x + j >= screenw)
+                        break;
+                    SET_RGB(addr[bpp * (x+j)], r, g, b);
+                }
             }
             addr += fb->pitch;
         }
@@ -42,8 +56,14 @@ void draw_rectangle(
         char *top = (char *) (fb->addr + y * fb->pitch + bpp * x);
         char *bottom = top + fb->pitch * height;
         for (int xpos = x; xpos < x + width; xpos++) {
-            SET_RGB(*top, r, g, b);
-            SET_RGB(*bottom, r, g, b);
+            if (xpos >= screenw)
+                break;
+            if (xpos >= 0) {
+                if (y >= 0 && y < screenh)
+                    SET_RGB(*top, r, g, b);
+                if (y + height >= 0 && y + height < screenh)
+                    SET_RGB(*bottom, r, g, b);
+            }
             top += bpp;
             bottom += bpp;
         }
@@ -51,8 +71,15 @@ void draw_rectangle(
         char *left = (char *) fb->addr + fb->pitch * y + bpp * x;
         char *right = left + bpp * width;
         for (int ypos = y; ypos < y + height; ypos++) {
-            SET_RGB(*left, r, g, b);
-            SET_RGB(*right, r, g, b);
+            if (ypos >= screenh)
+                break;
+            if (ypos > 0) {
+                if (x >= 0 && x < screenw)
+                    SET_RGB(*left, r, g, b);
+                if (x+width >= 0 && x+width <= screenw)
+                    SET_RGB(*right, r, g, b);
+            }
+            
             left += fb->pitch;
             right += fb->pitch;
         }
