@@ -40,6 +40,8 @@ int syscall(uint32_t eax, uint32_t ebx, uint32_t ecx, uint32_t edx, uint32_t esi
         return SYS_exit(ebx);
     case SYS_WRITE:
         return SYS_write(ebx, ecx, edx);
+    case SYS_YIELD:
+        return 0;
     default:
         return 0;
     }
