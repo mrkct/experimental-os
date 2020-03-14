@@ -1,9 +1,10 @@
 #include <stdbool.h>
-#include <kernel/lib/kassert.h>
 #include <kernel/arch/i386/paging.h>
-#include <kernel/memory/kheap.h>
 #include <kernel/arch/multiboot.h>
 #include <kernel/devices/framebuffer.h>
+#include <kernel/lib/kassert.h>
+#include <kernel/lib/util.h>
+#include <kernel/memory/kheap.h>
 
 
 struct FrameBuffer main_buffer;
@@ -24,9 +25,9 @@ int fb_init(multiboot_info_t *header)
         .width = header->framebuffer_width, 
         .height = header->framebuffer_height
     };
-    if (main_buffer.bytesPerPixel != 3) {
+    if (main_buffer.bytesPerPixel != 4) {
         panic(
-            "We only support 3 bytes per pixel depth for now.\n"
+            "We only support 32 bit pixel depth for now.\n"
             "Change the value in kernel/arch/i386/boot.S"
         );
     }
@@ -90,13 +91,11 @@ void fb_blit(
         TODO: Rewrite this to avoid checking IFs at every iteration. 
         This is terrible
     */
-    const int bpp = dest->bytesPerPixel;
     const int screenw = dest->width;
     const int screenh = dest->height;
-    char *fb_dest = (char *) dest->addr;
-    char *fb_src = (char *) src->addr;
+    uint32_t *fb_dest = (uint32_t *) (dest->addr + y * dest->pitch);
+    uint32_t *fb_src = (uint32_t *) src->addr;
 
-    fb_dest += y * dest->pitch;
     for (int i = 0; i < height; i++) {
         if (y+i >= screenh)
             break;
@@ -106,16 +105,12 @@ void fb_blit(
                     continue;
                 if (x+j >= screenw)
                     break;
-                const unsigned dest_offset = bpp * (x+j);
-                const unsigned src_offset = bpp * j;
 
-                fb_dest[dest_offset] = fb_src[src_offset];
-                fb_dest[dest_offset + 1] = fb_src[src_offset + 1];
-                fb_dest[dest_offset + 2] = fb_src[src_offset + 2];
+                fb_dest[x+j] = fb_src[j];
             }
         }
-        fb_dest += dest->pitch;
-        fb_src += src->pitch;
+        MOVE_PTR(fb_dest, uint32_t, dest->pitch);
+        MOVE_PTR(fb_src, uint32_t, src->pitch);
     }
 }
 
@@ -136,16 +131,16 @@ int screen_height(void)
 
 void screen_update(int x, int y, int width, int height)
 {
-    char *mainb = (char *) main_buffer.addr;
-    char *doubleb = (char *) double_buffer.addr;
+    uint32_t *mainb = (uint32_t *) main_buffer.addr;
+    uint32_t *doubleb = (uint32_t *) double_buffer.addr;
     const int bpp = main_buffer.bytesPerPixel;
     const unsigned offset = y * main_buffer.pitch + x * bpp;
     
     const int screenw = screen_width();
     const int screenh = screen_height();
 
-    mainb += offset;
-    doubleb += offset;
+    MOVE_PTR(mainb, uint32_t, offset);
+    MOVE_PTR(doubleb, uint32_t, offset);
 
     /*
         TODO: Optimize this, all those IFs are terrible for performance
@@ -161,14 +156,11 @@ void screen_update(int x, int y, int width, int height)
                 if (x + j >= screenw)
                     break;
 
-                const unsigned off = bpp * j;
-                mainb[off]     = doubleb[off];
-                mainb[off + 1] = doubleb[off + 1];
-                mainb[off + 2] = doubleb[off + 2];
+                mainb[j] = doubleb[j];
             }
         }
-        mainb += main_buffer.pitch;
-        doubleb += double_buffer.pitch;
+        MOVE_PTR(mainb, uint32_t, main_buffer.pitch);
+        MOVE_PTR(doubleb, uint32_t, double_buffer.pitch);
     }
 }
 
@@ -182,12 +174,7 @@ int fb_offset(struct FrameBuffer *fb, int x, int y)
     return fb->pitch * y + fb->bytesPerPixel * x;
 }
 
-void setpixel(
-    char *pixel, 
-    unsigned char r, unsigned char g, unsigned char b
-)
+Color make_color(unsigned char r, unsigned char g, unsigned char b)
 {
-    pixel[0] = b; 
-    pixel[1] = g;
-    pixel[2] = r;
+    return ((b << 0) & 0xff) | ((g << 8) & 0xff00) | ((r << 16) & 0xff0000);
 }

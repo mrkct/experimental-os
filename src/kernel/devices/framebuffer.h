@@ -1,6 +1,7 @@
 #ifndef FRAMEBUFFER_H
 #define FRAMEBUFFER_H
 
+#include <stdint.h>
 #include <kernel/arch/multiboot.h>
 
 
@@ -62,13 +63,11 @@ void screen_refresh(void);
 */
 int fb_offset(struct FrameBuffer *fb, int x, int y);
 
+typedef uint32_t Color;
+
 /*
-    Writes a single RGB pixel at an address. This is equivalent to doing
-    pixel[0] = b; pixel[1] = g; pixel[2] = r;
+    Returns the color value made with the 3 components
 */
-void setpixel(
-    char *pixel, 
-    unsigned char r, unsigned char g, unsigned char b
-);
+Color make_color(unsigned char r, unsigned char g, unsigned char b);
 
 #endif

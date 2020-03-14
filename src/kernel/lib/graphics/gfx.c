@@ -1,4 +1,6 @@
+#include <stdint.h>
 #include <kernel/lib/graphics/gfx.h>
+#include <kernel/lib/util.h>
 #include <kernel/devices/framebuffer.h>
 
 
@@ -34,54 +36,56 @@ void draw_rectangle(
     const int screenw = fb->width;
     const int screenh = fb->height;
 
+    Color color = make_color(r, g, b);
     const int bpp = fb->bytesPerPixel;
     if (!outlined) {
-        char *addr = (char *) (fb->addr + y * fb->pitch);
+        uint32_t *addr = (uint32_t *) (fb->addr + y * fb->pitch);
         for (int i = 0; i < height; i++) {
             if (y + i >= screenh)
                 break;
             if (y + i >= 0) {
-                const int end_offset = bpp * (x + width);
                 for (int j = 0; j < width; j++) {
                     if (x + j < 0)
                         continue;
                     if (x + j >= screenw)
                         break;
-                    SET_RGB(addr[bpp * (x+j)], r, g, b);
+                    addr[x+j] = color;
                 }
             }
-            addr += fb->pitch;
+            MOVE_PTR(addr, uint32_t, fb->pitch);
         }
     } else {
-        char *top = (char *) (fb->addr + y * fb->pitch + bpp * x);
-        char *bottom = top + fb->pitch * height;
+        uint32_t *top = (uint32_t *) (fb->addr + y * fb->pitch + bpp * x);
+        uint32_t *bottom = top;
+        MOVE_PTR(bottom, uint32_t, fb->pitch * height);
         for (int xpos = x; xpos < x + width; xpos++) {
             if (xpos >= screenw)
                 break;
             if (xpos >= 0) {
                 if (y >= 0 && y < screenh)
-                    SET_RGB(*top, r, g, b);
+                    *top = color;
                 if (y + height >= 0 && y + height < screenh)
-                    SET_RGB(*bottom, r, g, b);
+                    *bottom = color;
             }
-            top += bpp;
-            bottom += bpp;
+            top++;
+            bottom++;
         }
 
-        char *left = (char *) fb->addr + fb->pitch * y + bpp * x;
-        char *right = left + bpp * width;
+        uint32_t *left = (uint32_t *) (fb->addr + fb->pitch * y + bpp * x);
+        uint32_t *right = left;
+        MOVE_PTR(right, uint32_t, bpp * width);
         for (int ypos = y; ypos < y + height; ypos++) {
             if (ypos >= screenh)
                 break;
             if (ypos > 0) {
                 if (x >= 0 && x < screenw)
-                    SET_RGB(*left, r, g, b);
+                    *left = color;
                 if (x+width >= 0 && x+width <= screenw)
-                    SET_RGB(*right, r, g, b);
+                    *right = color;
             }
             
-            left += fb->pitch;
-            right += fb->pitch;
+            MOVE_PTR(left, uint32_t, fb->pitch);
+            MOVE_PTR(right, uint32_t, fb->pitch);
         }
     }
 }

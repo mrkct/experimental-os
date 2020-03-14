@@ -38,6 +38,7 @@ int draw_char(struct FrameBuffer *fb, int x, int y, char c)
     /*
         TODO: Optimize this to avoid all these IFs in the loop
     */
+    Color color = make_color(col_r, col_g, col_b);
     for (int row = 0; row < charheight; row++) {
         if (y+row < 0)
             continue;
@@ -50,8 +51,8 @@ int draw_char(struct FrameBuffer *fb, int x, int y, char c)
                 break;
             if ((fontdata[charoffset + row] >> j) & 0x1) {
                 int offset = fb_offset(fb, x + (7 - j), y + row);
-                char *addr = (char *) fb->addr;
-                setpixel(&addr[offset], col_r, col_g, col_b);
+                uint32_t *addr = (uint32_t *) (fb->addr + offset);
+                *addr = color;
             }
         }
     }
