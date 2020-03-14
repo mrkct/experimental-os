@@ -36,24 +36,24 @@ void window_free(struct Window *window)
 void draw_window(struct FrameBuffer *fb, struct Window *window)
 {
     // save the current color to restore it later
-    unsigned char pr, pg, pb;
-    get_color(&pr, &pg, &pb);
-    draw_rectangle(
-        fb, 
-        window->x, window->y, 
-        window->fb->width, WINDOW_BAR_HEIGHT, 
-        WINDOW_BAR_COLOR_R, WINDOW_BAR_COLOR_G, WINDOW_BAR_COLOR_B, 
-        false
+    Color old_color = get_color();
+    Color window_bar = make_color(
+        WINDOW_BAR_COLOR_R, WINDOW_BAR_COLOR_G, WINDOW_BAR_COLOR_B
     );
-    draw_rectangle(
+    fill_rect(
         fb, 
         window->x, window->y, 
         window->fb->width, WINDOW_BAR_HEIGHT, 
-        255, 255, 255, 
-        true
+        window_bar
+    );
+    draw_rect(
+        fb, 
+        window->x, window->y, 
+        window->fb->width, WINDOW_BAR_HEIGHT, 
+        COLOR_WHITE
     );
     draw_text(fb, window->x + 8, window->y + 4, window->title);
-    set_color(pr, pg, pb);
+    set_color(old_color);
     
     fb_blit(
         fb, window->fb, 

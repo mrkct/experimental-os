@@ -33,12 +33,10 @@ int draw_char(struct FrameBuffer *fb, int x, int y, char c)
     if (charoffset < 0)
         return -1;
     int charheight = psf_charheight(fontdata);
-    unsigned char col_r, col_g, col_b;
-    get_color(&col_r, &col_g, &col_b);
     /*
         TODO: Optimize this to avoid all these IFs in the loop
     */
-    Color color = make_color(col_r, col_g, col_b);
+    Color color = get_color();
     for (int row = 0; row < charheight; row++) {
         if (y+row < 0)
             continue;
