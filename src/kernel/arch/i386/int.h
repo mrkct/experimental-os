@@ -9,6 +9,7 @@
 #define IRQ_OFFSET 32
 #define IRQ_TIMER       (IRQ_OFFSET + 0)
 #define IRQ_KEYBOARD    (IRQ_OFFSET + 1)
+#define IRQ_PS2MOUSE    (IRQ_OFFSET + 12)
 #define IRQ_ATA_PRIMARY (IRQ_OFFSET + 14)
 #define IRQ_ATA_SECONDARY (IRQ_OFFSET + 15)
 #define IRQ_SYSCALL     (0x80)
