@@ -1,30 +1,31 @@
+#include <kernel/arch/i386/boot/descriptor_tables.h>
+#include <kernel/arch/i386/paging.h>
+#include <kernel/arch/i386/x86.h>
+#include <kernel/arch/multiboot.h>
+#include <kernel/devices/framebuffer.h>
+#include <kernel/devices/ide/ide.h>
+#include <kernel/devices/mouse.h>
+#include <kernel/devices/ps2kb/keyboard.h>
+#include <kernel/devices/ramdisk/ramdisk.h>
+#include <kernel/devices/serial/serial.h>
+#include <kernel/devices/timer/timer.h>
+#include <kernel/devices/tty/tty.h>
+#include <kernel/devices/vdisk.h>
+#include <kernel/filesystems/fat16/fat16vfs.h>
+#include <kernel/filesystems/vfs.h>
+#include <kernel/gui/compositor.h>
+#include <kernel/lib/kassert.h>
+#include <kernel/lib/kprintf.h>
+#include <kernel/lib/read_string.h>
+#include <kernel/memory/kheap.h>
+#include <kernel/memory/memory.h>
+#include <kernel/modules.h>
+#include <kernel/monitor.h>
+#include <kernel/process.h>
+#include <klibc/string.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
-#include <kernel/devices/tty/tty.h>
-#include <kernel/devices/timer/timer.h>
-#include <kernel/devices/ps2kb/keyboard.h>
-#include <kernel/arch/i386/boot/descriptor_tables.h>
-#include <kernel/arch/i386/x86.h>
-#include <kernel/arch/i386/paging.h>
-#include <kernel/memory/memory.h>
-#include <kernel/memory/kheap.h>
-#include <kernel/lib/kprintf.h>
-#include <kernel/lib/read_string.h>
-#include <kernel/lib/kassert.h>
-#include <kernel/arch/multiboot.h>
-#include <kernel/monitor.h>
-#include <kernel/modules.h>
-#include <kernel/devices/vdisk.h>
-#include <kernel/devices/ramdisk/ramdisk.h>
-#include <kernel/devices/ide/ide.h>
-#include <klibc/string.h>
-#include <kernel/filesystems/vfs.h>
-#include <kernel/filesystems/fat16/fat16vfs.h>
-#include <kernel/process.h>
-#include <kernel/devices/serial/serial.h>
-#include <kernel/devices/framebuffer.h>
-#include <kernel/gui/compositor.h>
 
 
 struct DiskInterface diskinterface;
@@ -94,7 +95,9 @@ void kernel_setup(multiboot_info_t *header, unsigned int magic)
     vfsinterface = fat16_get_vfsinterface(&diskinterface);
     vfs_setroot(vfsinterface);
 
-    kprintf("Starting Compositor Server");
+    mouse_init();
+
+    kprintf("Starting Compositor Server\n");
     process_create("Compositor Server", (uint32_t) __compositor_main, paging_kernel_pgdir());
 
     kprintf("All done. Ready to start!\n");

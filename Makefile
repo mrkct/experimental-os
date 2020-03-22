@@ -25,6 +25,7 @@ CSOURCES = \
 	src/kernel/devices/ide/ide.c \
 	src/kernel/devices/serial/serial.c \
 	src/kernel/devices/framebuffer.c \
+	src/kernel/devices/mouse.c \
 	src/kernel/filesystems/vfs.c \
 	src/kernel/filesystems/fat16/fat16.c \
 	src/kernel/filesystems/fat16/fat16vfs.c \
@@ -38,6 +39,7 @@ CSOURCES = \
 	src/kernel/lib/graphics/gfx.c \
 	src/kernel/gui/window.c \
 	src/kernel/gui/compositor.c \
+	src/kernel/gui/cursor.c \
 	src/kernel/memory/memory.c \
 	src/kernel/memory/kheap.c \
 	src/kernel/monitor.c \
