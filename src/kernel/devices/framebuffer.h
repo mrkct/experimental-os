@@ -30,7 +30,18 @@ void fb_blit(
     int x, int y, int width, int height
 );
 
+/*
+    Returns the framebuffer used for doublebuffering. 
+    In doubt, use this
+*/
 struct FrameBuffer *get_screen_framebuffer(void);
+
+/*
+    Returns the direct screen framebuffer: writing to this one will 
+    instantly show up on the screen but is also insanely slow. You should 
+    plan to write as less as possible
+*/
+struct FrameBuffer *get_main_framebuffer(void);
 
 /*
     Returns the screen width in pixels. This is a constant
@@ -69,5 +80,11 @@ typedef uint32_t Color;
     Returns the color value made with the 3 components
 */
 Color make_color(unsigned char r, unsigned char g, unsigned char b);
+
+/*
+    Writes a single pixel on the framebuffer at a given position. 
+    If the position is outside the buffer it won't be drawn 
+*/
+void put_pixel(struct FrameBuffer *fb, int x, int y, Color color);
 
 #endif

@@ -119,6 +119,11 @@ struct FrameBuffer *get_screen_framebuffer(void)
     return &double_buffer;
 }
 
+struct FrameBuffer *get_main_framebuffer(void)
+{
+    return &main_buffer;
+}
+
 int screen_width(void)
 {
     return main_buffer.width;
@@ -177,4 +182,15 @@ int fb_offset(struct FrameBuffer *fb, int x, int y)
 Color make_color(unsigned char r, unsigned char g, unsigned char b)
 {
     return ((b << 0) & 0xff) | ((g << 8) & 0xff00) | ((r << 16) & 0xff0000);
+}
+
+void put_pixel(struct FrameBuffer *fb, int x, int y, Color color)
+{
+    const int screenw = fb->width;
+    const int screenh = fb->height;
+
+    if (x < 0 || x >= screenw || y < 0 || y >= screenh)
+        return;
+    uint32_t *addr = (uint32_t *) (fb->addr + fb_offset(fb, x, y));
+    *addr = color;
 }
