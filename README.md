@@ -52,25 +52,15 @@ after that
 - Dynamic memory allocator (kernel only)
 - Read only FAT16 file system with a virtual file system layer
     - Note that this works from a ramdisk for now
+- Long file names support for FAT16
+- An ATA disk driver (semi, read-only)
+- Reading datetime from CMOS
+- A driver for the mouse
+- A graphical interface
 
 ## In the future...
 - A real memory allocator
-- Long file names support for FAT16
-- An ATA disk driver
 - Some sort of stdin/stdout for each program
-- Reading datetime from CMOS
 - Relative pathnames
 - More syscalls for stuff such as: reading keyboard input, file IO, allocating memory ...
-- A graphical interface
-- A driver for the mouse 
-
-## Bugs/FixMes
-### Keyboard related
-- Not all keyboard keys are mapped
-- Sometimes random keyboard events are incorrectly mapped as ENTER presses
-- Keyboard modifiers are not implemented
-### Multitasking related
-- The program stacks need to be allocated in the low 120MB, but right now we just allocate 
-and hope it allocates there. This always works on machines with 128MB or less
-- When a process ends we don't actually free it's memory
-### 
+- Some actual programs to use the system
