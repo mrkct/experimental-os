@@ -1,11 +1,15 @@
-#include <stdint.h>
+#include <kernel/devices/framebuffer.h>
+#include <kernel/devices/mouse.h>
+#include <kernel/gui/compositor.h>
+#include <kernel/gui/cursor.h>
+#include <kernel/gui/window.h>
+#include <kernel/lib/graphics/gfx.h>
+#include <kernel/lib/kassert.h>
+#include <kernel/lib/util.h>
+#include <kernel/memory/kheap.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <kernel/memory/kheap.h>
-#include <kernel/gui/compositor.h>
-#include <kernel/gui/window.h>
-#include <kernel/lib/kassert.h>
-#include <kernel/devices/framebuffer.h>
+#include <stdint.h>
 
 
 struct WindowID {
@@ -126,44 +130,99 @@ int focus_window(struct Window *window)
     return drawlist_focus(window);
 }
 
+static void set_background(struct Window *window)
+{
+    struct WindowID *id = kmalloc(sizeof(struct WindowID));
+    id->next = drawlist.head;
+    id->window = window;
+    drawlist.head = id;
+    drawlist.size++;
+}
+
 void __compositor_main(void)
 {
     struct FrameBuffer *screen = get_screen_framebuffer();
+    struct Window *background = window_create(
+        "Background", 
+        0, -WINDOW_BAR_HEIGHT, 
+        screen->width, screen->height
+    );
+    Color bck = make_color(0, 128, 127);
+    fill_rect(background->fb, 0, 0, screen->width, screen->height, bck);
+    background->flags |= WINDOW_UPDATED;
+    set_background(background);
+    
+    struct MouseStatus previous = (struct MouseStatus) {0};
+
     while (true) {
+        struct {
+            int tlx, tly;
+            int brx, bry;
+        } update_area;
+        update_area.tlx = screen->width;
+        update_area.tly = screen->height;
+        update_area.brx = 0;
+        update_area.bry = 0;
+
+        /*
+            Here we try to decide if we should redraw the whole screen 
+            or we can just update parts of it. If a window was moved we 
+            need to redraw everything, otherwise we might be able to avoid it. 
+            I expect that there will be not many windows open at the same time 
+            (less than 20) therefore looping twice is not bad
+        */
         struct WindowID *id = drawlist.head;
+        bool full_update = false;
         bool needs_redraw = false;
-        while (id != drawlist.tail) {
-            if (id->window->flags & WINDOW_UPDATED) {
+        while (id) {
+            if (id->window->flags & WINDOW_MOVED) {
+                full_update = true;
                 needs_redraw = true;
             }
-            if (needs_redraw) {
-                draw_window(screen, id->window);
-                id->window->flags = id->window->flags & ~(WINDOW_UPDATED | WINDOW_MOVED);
+            
+            if (needs_redraw || id->window->flags & WINDOW_UPDATED) {
+                needs_redraw = true;
+                update_area.tlx = MIN(update_area.tlx, id->window->x);
+                update_area.tly = MIN(update_area.tly, id->window->y);
+                update_area.brx = MAX(
+                    update_area.brx, 
+                    id->window->x + id->window->fb->width
+                );
+                update_area.bry = MAX(
+                    update_area.bry, 
+                    id->window->y + id->window->fb->height + WINDOW_BAR_HEIGHT
+                );
             }
+            
             id = id->next;
         }
-        /*
-            Since the most common case is that the focused window is updated 
-            we handle it in a special way so that we only redraw its portion 
-            of the screen
-        */
-        struct WindowID *last = drawlist.tail;
-        if (last == NULL)
-            continue;
-        if (last->window->flags & WINDOW_UPDATED) {
-            last->window->flags = last->window->flags & ~(WINDOW_UPDATED | WINDOW_MOVED);
-            draw_window(screen, last->window);
-            if (needs_redraw) {
-                screen_refresh();
-            } else {
-                screen_update(
-                    last->window->x, 
-                    last->window->y, 
-                    last->window->fb->width, 
-                    last->window->fb->height + WINDOW_BAR_HEIGHT);
+        
+        if (needs_redraw) {
+            id = drawlist.head;
+            while (id) {
+                const int flags = id->window->flags;
+                if (full_update || flags & (WINDOW_UPDATED | WINDOW_MOVED)) {
+                    draw_window(screen, id->window);
+                    id->window->flags = flags & ~(WINDOW_UPDATED | WINDOW_MOVED);
+                }
+
+                id = id->next;
             }
-        } else if (needs_redraw) {
-            screen_refresh();
+        }
+        
+        screen_update(
+            update_area.tlx, update_area.tly, 
+            update_area.brx - update_area.tlx, 
+            update_area.bry - update_area.tly);
+        
+        struct MouseStatus mouse = mouse_status();
+        if (mouse.x != previous.x || mouse.y != previous.y) {
+            screen_update(
+                previous.x, previous.y, 
+                cursor_width(), cursor_height()
+            );
+            draw_cursor(get_main_framebuffer(), mouse.x, mouse.y);
+            previous = mouse;
         }
     }
 }
