@@ -20,22 +20,27 @@ static unsigned char cursor_data[] = {
 
 void draw_cursor(struct FrameBuffer *fb, int x, int y)
 {
-    uint32_t *addr = (uint32_t *) (fb->addr + y * fb->pitch);
-    addr += x;
-
     const int width = cursor_data[0];
     const int height = cursor_data[1];
 
-    unsigned dataoffset = 2;
     for (int i = 0; i < height; i++) {
         for (int j = 0; j < width; j++) {
+            const unsigned dataoffset = 2 + (i * width + j);
             if (cursor_data[dataoffset] == 0) {
-                addr[j] = COLOR_BLACK;
+                put_pixel(fb, x + j, y + i, COLOR_BLACK);
             } else if (cursor_data[dataoffset] == 1) {
-                addr[j] = COLOR_WHITE;
+                put_pixel(fb, x + j, y + i, COLOR_WHITE);
             }
-            dataoffset++;
         }
-        MOVE_PTR(addr, uint32_t, fb->pitch);
     }
+}
+
+int cursor_width(void)
+{
+    return cursor_data[0];
+}
+
+int cursor_height(void)
+{
+    return cursor_data[1];
 }
